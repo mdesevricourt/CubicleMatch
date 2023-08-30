@@ -6,10 +6,10 @@ class Person:
     def __init__(self, name, U, budget):
         self.name = name
         # check that U is a 2D square triangular numpy array
-        assert isinstance(U, np.ndarray)
-        assert U.ndim == 2
-        assert U.shape[0] == U.shape[1]
-        assert np.allclose(U, np.triu(U))
+        assert isinstance(U, np.ndarray) # check that U is a numpy array
+        assert U.ndim == 2 # check that U is 2D
+        assert U.shape[0] == U.shape[1] # check that U is square
+        assert np.allclose(U, np.triu(U)) # check that U is triangular
 
         self.U = U
         self.budget = budget
