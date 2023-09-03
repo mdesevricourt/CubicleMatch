@@ -5,7 +5,7 @@ import numpy as np
 
 class Cubicle:
     def __init__(self, number, prices) -> None:
-        self.number = number
+        self.number = str(number)
         self._prices = prices
         self.numberofhalfdays = len(prices)
 
