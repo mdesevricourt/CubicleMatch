@@ -49,9 +49,10 @@ class Market:
         # create a dictionary of the prices of all the cublicles
         prices = {}
         for cubicle in self.cublicles:
-            prices[cubicle] = cubicle.price_bundle(bundle)
+            prices[cubicle.number] = cubicle.price_bundle(bundle)
         
-        # get the cublicle that has the lowest price
+        # get the number of cublicle that has the lowest price
+        
         cubicle = min(prices, key=prices.get)
         # get the price of the cublicle that has the lowest price
         price = prices[cubicle]
