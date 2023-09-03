@@ -1,8 +1,8 @@
-"""Create a Person class to store the information of each participant to the matching algorithm to solve their demand"""
+"""Create an Agent class to store the information of each participant to the matching algorithm to solve their demand"""
 import numpy as np
 import random
 
-class Person:
+class Agent:
     def __init__(self, name, U, budget):
         self.name = name
         # check that U is a 2D square triangular numpy array
@@ -19,19 +19,10 @@ class Person:
         utility = np.matmul(np.matmul(x.T, self.U), x) 
         return utility
     
-    def find_highest_utility_bundle(self, assignments):
+    def find_agent_demand(self, bundles):
         """Return the assignment that maximizes the utility of the person"""
 
-        best_assignment = None
-        best_utility = -np.inf
-
-        for x in assignments:
-            utility = self.utility(x)
-            if utility > best_utility:
-                best_utility = utility
-                best_assignment = x
-
-        return best_assignment, best_utility
+        
         
 
 
@@ -42,7 +33,7 @@ if __name__ == "__main__":
     # draw a random utility matrix that is 10 by 10 and triangular
     U = np.triu(np.random.randint(-10, 10, size=(10, 10)))
 
-    Alice = Person("Alice", U, 100)
+    Alice = Agent("Alice", U, 100)
 
 
     vectors = []
@@ -63,7 +54,7 @@ if __name__ == "__main__":
     vectors = np.array(vectors)
 
     for i in range(50):
-        best_assignment, utility =Alice.find_highest_utility_bundle(vectors)
+        best_assignment, utility = Alice.find_highest_utility_bundle(vectors)
 
     print(best_assignment, utility)
 
