@@ -5,23 +5,42 @@ import random
 class Agent:
     def __init__(self, name, U, budget):
         self.name = name
+        U = np.array(U) 
         # check that U is a 2D square triangular numpy array
         assert isinstance(U, np.ndarray) # check that U is a numpy array
         assert U.ndim == 2 # check that U is 2D
         assert U.shape[0] == U.shape[1] # check that U is square
         assert np.allclose(U, np.triu(U)) # check that U is triangular
 
-        self.U = U
+        self.U = np.array(U)
         self.budget = budget
 
     def utility(self, x):
         """Return the utility of a person for a given assignment across all half-days"""
+        x = np.array(x)
         utility = np.matmul(np.matmul(x.T, self.U), x) 
         return utility
     
-    def find_agent_demand(self, bundles):
-        """Return the assignment that maximizes the utility of the person"""
+    def find_agent_demand(self, priced_bundles):
+        """Return the assignment that maximizes the utility of the person
+        
+        Args:
+            priced_bundles (list): A list of tupbles of the form (bundle, cubicle, price) where bundle is a numpy array of 0s and 1s and price is a float.
+            
+        Returns:
+            tuple: A tuple of the form (bundle, cubicle, price) where bundle is a numpy array of 0s and 1s and price is a float that maximizes the utility of the person."""
+        
+        # remove all bundles that are too expensive
+        feasible_bundles = [priced_bundle for priced_bundle in priced_bundles if priced_bundle[2] <= self.budget]
 
+        # if there are no feasible bundles, return None
+        if len(feasible_bundles) == 0:
+            return None
+
+        # get the bundle that maximizes the utility of the person
+        bundle, cubicle, price = max(feasible_bundles, key=lambda x: self.utility(x[0]))
+
+        return bundle, cubicle, price
         
         
 
