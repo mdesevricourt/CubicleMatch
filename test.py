@@ -42,6 +42,87 @@ class TestAgent(unittest.TestCase):
 
         return
 
+class TestMarket(unittest.TestCase):
+
+    # create a setUp method to initialize a Market instance with some sample data
+    def setUp(self):
+        # create some sample agents
+        U_Alice = np.zeros((4, 4))
+        np.fill_diagonal(U_Alice, [1, 0, 1, 0])
+        U_Bob = np.zeros((4, 4))
+        np.fill_diagonal(U_Bob, [0, 1, 0, 1])
+        budgets = 10
+        agents = [Agent("Alice", U_Alice, 100), Agent("Bob", U_Bob, 100)]
+        # create some sample cubicles with different prices
+        cubicles = [Cubicle("C1", [10, 20, 30, 40]), Cubicle("C2", [15, 25, 35, 45])]
+        # create a Market instance with the agents and cubicles
+        self.market = Market(agents, cubicles)
+
+    # create a test method for each method of the Market class
+    def test_prices_array(self):
+        # test that the prices_array property returns a numpy array of the prices of the cubicles
+        expected = np.array([[10, 20, 30, 40], [15, 25, 35, 45]])
+        actual = self.market.prices_array
+        # use assertArrayEqual to compare numpy arrays
+        np.testing.assert_array_equal(actual, expected)
+
+    def test_prices_array(self):
+        # test that the update_prices_array method sets the prices of the cubicles correctly
+        # create a new array of prices to update
+        new_prices = np.array([[11, 21, 31, 41], [16, 26, 36, 46]])
+        # call the update_prices_array method with the new prices
+        self.market.prices_array = new_prices
+        # check that the prices_array property reflects the changes
+        expected = new_prices
+        actual = self.market.prices_array
+        # use assertArrayEqual to compare numpy arrays
+        np.testing.assert_array_equal(actual, expected)
+
+    def test_prices_vec(self):
+        # test that the prices_vec property returns a numpy array of the prices of the cubicles flattened
+        expected = np.array([10, 20, 30, 40, 15, 25, 35, 45])
+        actual = self.market.prices_vec
+        # use assertArrayEqual to compare numpy arrays
+        np.testing.assert_array_equal(actual, expected)
+
+    def test_prices_vec(self):
+        # test that the update_prices_vec method sets the prices of the cubicles correctly
+        # create a new array of prices to update (flattened)
+        new_prices = np.array([11, 21, 31, 41, 16, 26, 36, 46])
+        # call the update_prices_vec method with the new prices
+        self.market.prices_vec = new_prices
+        # check that the prices_vec property reflects the changes
+        expected = new_prices
+        actual = self.market.prices_vec
+        # use assertArrayEqual to compare numpy arrays
+        np.testing.assert_array_equal(actual, expected)
+
+    def test_price_bundle(self):
+        # test that the price_bundle method returns the lowest price of a bundle of half-days across all cubicles,
+        # as well as the name of the cubicle that has the lowest price
+        # create a sample bundle of half-days (a numpy array of zeros and ones)
+        bundle = np.array([1, 0, 1, 0])
+        # call the price_bundle method with the bundle
+        price, cubicle = self.market.price_bundle(bundle)
+        # check that the price is correct (the sum of the first and third elements of the lowest-priced cubicle)
+        expected_price = 10 + 30 # C1 has the lowest price for this bundle
+        actual_price = price
+        # use assertEqual to compare scalars
+        self.assertEqual(actual_price, expected_price)
+        # check that the cubicle is correct
+        expected_cubicle = "C1"
+        actual_cubicle = cubicle
+        # use assertEqual to compare strings
+        self.assertEqual(actual_cubicle, expected_cubicle)
+
+    def test_aggregate_demand(self):
+        # test that the aggregate_demand method returns a dictionary of the aggregate demand for each cubicle
+        # create a sample bundle of half-days (a numpy array of zeros and ones)
+        expected_aggregate_demand = np.array([1, 1, 1, 1, 0, 0, 0, 0])
+        actual_aggregate_demand = self.market.aggregate_demand()
+        print(self.market.cublicles_names)
+        self.assertEqual(actual_aggregate_demand, expected_aggregate_demand.tolist())
+    
 
 if __name__ == "__main__":
     unittest.main()
