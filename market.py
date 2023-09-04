@@ -65,18 +65,24 @@ class Market:
         """Return the prices of all the bundles, along with the cublicle that has the lowest price for that bundle"""
         
         bundles = self.bundles
-        # for each bundle, finds the cubicle that has the lowest price for that bundle, get its name and the price
+        priced_bundles = []
+        # if maxing_price = False, for each bundle, finds the cubicle that has the lowest price for that bundle, get its name and the price
         # create a list of triplet (bundle, cubicle, price)
-        princed_bundles = []
-
-        for bundle in bundles:
-            price, cubicle = self.price_bundle(bundle)
-            princed_bundles.append((bundle, cubicle, price))
+        
+        if self.maxing_price: 
+            for bundle in bundles:
+                for cubicle in self.cublicles:
+                    price, _ = cubicle.price_bundle(bundle)
+                    priced_bundles.append((bundle, cubicle.number, price))
+        else:
+            for bundle in bundles:
+                price, cubicle = self.price_bundle(bundle)
+                priced_bundles.append((bundle, cubicle, price))
 
         # sort the list of triplet by price from lowest to highest
-        princed_bundles = sorted(princed_bundles, key=lambda x: x[2])
+        priced_bundles = sorted(priced_bundles, key=lambda x: x[2])
 
-        return princed_bundles
+        return priced_bundles
     
     def aggregate_demand(self, verbose = False):
         """Return the aggregate demand of all the agents, given the current prices of the cublicles"""
