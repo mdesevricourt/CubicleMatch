@@ -7,73 +7,78 @@ import itertools
 from agent import Agent
 from cubicle import Cubicle
 
+random.seed(123)
+np.random.seed(123)
 class Market:
-    def __init__(self, agents, cublicles, maxing_price = False) -> None:
+    def __init__(self, agents, cubicles, maxing_price = False) -> None:
         self.agents = agents
-        self.cublicles = cublicles
-        self.cublicles_names = [cubicle.number for cubicle in cublicles]
+        self.cubicles = cubicles
+        self.cubicles_names = [cubicle.number for cubicle in cubicles]
         self.numberofagents = len(agents)
-        self.numberofcublicles = len(cublicles)
-        self.numberofhalfdays = cublicles[0].numberofhalfdays
+        self.numberofcubicles = len(cubicles)
+        self.numberofhalfdays = cubicles[0].numberofhalfdays
         self.bundles = [np.array(t) for t in itertools.product([0, 1], repeat=self.numberofhalfdays)]
         self.max_budget = max([agent.budget for agent in agents])
         self.maxing_price = maxing_price
     @property
     def prices_array(self):
-        """Returns the prices of the cublicles in a numpy array"""
-        return np.array([cubicle.prices for cubicle in self.cublicles])
+        """Returns the prices of the cubicles in a numpy array"""
+        return np.array([cubicle.prices for cubicle in self.cubicles])
     
     @prices_array.setter
     def prices_array(self, prices):
-        """Set the prices of the cublicles"""
+        """Set the prices of the cubicles"""
         # check that prices is the right length
-        assert len(prices) == self.numberofcublicles
-        for cubicle, price in zip(self.cublicles, prices):
+        assert len(prices) == self.numberofcubicles
+        for cubicle, price in zip(self.cubicles, prices):
             cubicle.prices = price
 
     @property
     def prices_vec(self):
-        """Returns the prices of the cublicles in a numpy array"""
-        return np.array([cubicle.prices for cubicle in self.cublicles]).flatten()
+        """Returns the prices of the cubicles in a numpy array"""
+        return np.array([cubicle.prices for cubicle in self.cubicles]).flatten()
     
     @prices_vec.setter
     def prices_vec(self, prices):
-        """Set the prices of the cublicles"""
+        """Set the prices of the cubicles"""
         
-        # divide the prices into the cublicles
-        prices = np.array(prices).reshape(self.numberofcublicles, self.numberofhalfdays)
+        # divide the prices into the cubicles
+        prices = np.array(prices).reshape(self.numberofcubicles, self.numberofhalfdays)
         # use the update prices_array method
         self.prices_array = prices
-
-    def print_allocation(self):
-        """Print the allocation of the agents to the cublicles"""
+    def print_ACE(self):
+        """Print the ACE found - careful, this will change the allocation of the agents to the cubicles"""
         print(f"With prices: {self.prices_vec},")
         print(f"Aggregate demand: {self.aggregate_demand(verbose=True)},")
         print(f"and a clearing error of {self.clearing_error()[0]},")
-        print(f"Agents are assigned to cublicles as follows:")
+        self.print_allocation()
+
+    def print_allocation(self):
+        """Print the allocation of the agents to the cubicles"""
+
+        print(f"Agents are assigned to cubicles as follows:")
         for agent in self.agents:
-            print(f"{agent.name} is assigned to {agent.cublicle} with bundle {agent.current_assignment}, with excess budget {agent.excess_budget}")
-        print(f"Prices: {self.prices_vec}")
+            print(f"{agent.name} is assigned to {agent.cubicle} with bundle {agent.current_assignment}, with excess budget {agent.excess_budget}")
         
 
     def price_bundle(self, bundle):
-        """Return the lowest price of a bundle of half-days across all cublicles, as well as the name of the cubicle that has the lowest price"""
-        # create a dictionary of the prices of all the cublicles
+        """Return the lowest price of a bundle of half-days across all cubicles, as well as the name of the cubicle that has the lowest price"""
+        # create a dictionary of the prices of all the cubicles
         prices = {}
-        for cubicle in self.cublicles:
+        for cubicle in self.cubicles:
             prices[cubicle.number] = cubicle.price_bundle(bundle)
         
-        # get the number of cublicle that has the lowest price
+        # get the number of cubicle that has the lowest price
         
         cubicle = min(prices, key=prices.get)
-        # get the price of the cublicle that has the lowest price
+        # get the price of the cubicle that has the lowest price
         price = prices[cubicle]
 
         return price, cubicle
 
     @property
     def priced_bundles(self):
-        """Return the prices of all the bundles, along with the cublicle that has the lowest price for that bundle"""
+        """Return the prices of all the bundles, along with the cubicle that has the lowest price for that bundle"""
         
         bundles = self.bundles
         priced_bundles = []
@@ -82,7 +87,7 @@ class Market:
         
         if self.maxing_price: 
             for bundle in bundles:
-                for cubicle in self.cublicles:
+                for cubicle in self.cubicles:
                     price = cubicle.price_bundle(bundle)
                     priced_bundles.append((bundle, cubicle.number, price))
         else:
@@ -96,9 +101,9 @@ class Market:
         return priced_bundles
     
     def aggregate_demand(self, verbose = False):
-        """Return the aggregate demand of all the agents, given the current prices of the cublicles"""
-        # for each cublicle, create a list representing the demand for that cublicle
-        demand_for_cublicles = [0] * self.numberofcublicles * self.numberofhalfdays
+        """Return the aggregate demand of all the agents, given the current prices of the cubicles"""
+        # for each cubicle, create a list representing the demand for that cubicle
+        demand_for_cubicles = [0] * self.numberofcubicles * self.numberofhalfdays
         
         maxing_price = self.maxing_price
         # for each agent, find the bundle that maximizes the utility of the agent
@@ -106,19 +111,19 @@ class Market:
             bundle, cubicle, _ = agent.find_agent_demand(self.priced_bundles, maxing_price=maxing_price)
             # update the current assignment of the agent
             agent.current_assignment = bundle
-            # update the assigned cublicle of the agent
-            agent.cublicle = cubicle
+            # update the assigned cubicle of the agent
+            agent.cubicle = cubicle
             # if the agent is assigned to a bundle
             if bundle is not None:
-                # update the demand for that cublicle
-                demand_for_cublicles[self.cublicles_names.index(cubicle) * self.numberofhalfdays: self.cublicles_names.index(cubicle) * self.numberofhalfdays + self.numberofhalfdays] += bundle
+                # update the demand for that cubicle
+                demand_for_cubicles[self.cubicles_names.index(cubicle) * self.numberofhalfdays: self.cubicles_names.index(cubicle) * self.numberofhalfdays + self.numberofhalfdays] += bundle
                 agent.excess_budget = agent.budget - self.price_bundle(bundle)[0]
 
         
-        return demand_for_cublicles
+        return demand_for_cubicles
     
     def excess_demand(self):
-        """Return the excess demand of all the agents, given the current prices of the cublicles"""
+        """Return the excess demand of all the agents, given the current prices of the cubicles"""
         # get the aggregate demand
         demand = self.aggregate_demand()
         # compute the excess demand
@@ -135,7 +140,7 @@ class Market:
         return excess_budgets
     
     def clearing_error(self, verbose = False):
-        """Return the clearing error of the market, given the current prices of the cublicles
+        """Return the clearing error of the market, given the current prices of the cubicles
         
         Returns:
             float: The clearing error of the market
@@ -156,7 +161,7 @@ class Market:
 
     def find_neighbors(self, p):
         # create a list of neighbors
-        self.price_vec = p # set the prices of the cublicles to p
+        self.price_vec = p # set the prices of the cubicles to p
         alpha, z, d = self.clearing_error() # compute the clearing error
 
         neighbors = []
@@ -223,28 +228,32 @@ class Market:
         return neighbors, (alpha, z, d)
     
 
-    def find_ACE(self, verbose = True):
-        """Implements Approximate Competitive Equilibrium from Equal Incomes (ACEEI) algorithm to find an allocation of the cublicles to the agents
+    def find_ACE(self, N = 1000, verbose = True):
+        """Implements Approximate Competitive Equilibrium from Equal Incomes (ACEEI) algorithm to find an allocation of the cubicles to the agents
         
         Returns: 
-            dict: A dictionary of the form {agent: cublicle} that represents the allocation of the cublicles to the agents
-            numpy array: A numpy array of the form [price_cublicle_1_half_day_1, price_cublicle_1_half_day_2, ..., price_cublicle_2_half_day_1, ...] that represents the prices of the cublicles"
+            dict: A dictionary of the form {agent: cubicle} that represents the allocation of the cubicles to the agents
+            numpy array: A numpy array of the form [price_cubicle_1_half_day_1, price_cubicle_1_half_day_2, ..., price_cubicle_2_half_day_1, ...] that represents the prices of the cubicles"
         """
         print("Running ACE algorithm")
         total_budget = sum([agent.budget for agent in self.agents])
-        # initialize the prices of the haldayfs per cublicle to total budget/number of half-days
+        # initialize the prices of the haldayfs per cubicle to total budget/number of half-days
 
         besterror = np.inf
         best_number_excess_demand = np.inf
         pstar = None
         type_neighbor_selected = {}
         # run the algorithm 100 times
-        for i in range(50):
-            # max budget times random draw from uniform distribution
-            p = self.max_budget * np.random.rand(len(self.prices_vec))
+        for i in range(N):
+            # with probability 0.5, initialize the prices of the half-days per cubicle to max budget * random number between 0 and 1
+            if np.random.rand() < 0.5:
+                p = self.max_budget * np.random.rand(len(self.prices_vec))
+            else:
+                # error drawn from uniform distribution between -1 and 1
+                p = total_budget / (self.numberofhalfdays * self.numberofcubicles) + np.random.uniform(-1, 1, len(self.prices_vec))
             # p = total budget / (number of half-days * number of cubicles) + random error
-            p = total_budget / (self.numberofhalfdays * self.numberofcublicles) + 2* np.random.rand(len(self.prices_vec))
-            self.prices_vec = p # set the prices of the cublicles to p
+            
+            self.prices_vec = p # set the prices of the cubicles to p
             # find the neighbors of p_0
             tabu_list = []
             c = 0
@@ -303,6 +312,7 @@ class Market:
 
         self.pstar = pstar
         self.prices_vec = pstar
+        self.excess_demand() # make sure ACE is computed
         self.neighbor_type_selected = type_neighbor_selected
 
     def pricing_out(self, verbose = False):
@@ -354,9 +364,9 @@ class Market:
             min_excess_demand = np.min(excess_demand)
             min_excess_demand_index = np.where(excess_demand == min_excess_demand)[0][0]
             # find the corresponding cubicle
-            cubicle = self.cublicles[min_excess_demand_index // self.numberofhalfdays]
+            cubicle = self.cubicles[min_excess_demand_index // self.numberofhalfdays]
             # among agents in that cubicle, find higest excess budget
-            agents_in_cubicle = [agent for agent in self.agents if agent.cublicle == cubicle.number]
+            agents_in_cubicle = [agent for agent in self.agents if agent.cubicle == cubicle.number]
             max_excess_budget = max([agent.excess_budget for agent in agents_in_cubicle])
             # decrease the price of the item with highest excess demand by exactly the highest excess budget
             prices[min_excess_demand_index] -= max_excess_budget
@@ -379,22 +389,63 @@ class Market:
             i += 1
 
 
-
-    def filling_empty_slots(self):
+    def filling_empty_slots(self, verbose = False):
         """This function fills the empty slots in each cubicle with agents that are assigned to have cubicle, in the order of excess budget"""
-
-        for cubicle in self.cublicles:
-            # get the agents that are assigned to the cubicle
-            agents_in_cubicle = [agent for agent in self.agents if agent.cublicle == cubicle.number]
-
+        print("Running filling empty slots algorithm")
+        for cubicle in self.cubicles:
             
+            # get the agents that are assigned to the cubicle
+            agents_in_cubicle = [agent.name for agent in self.agents if agent.cubicle == cubicle.number]
+            # get agent's excess budget
+            excess_budgets = [agent.excess_budget for agent in self.agents if agent.cubicle == cubicle.number]
+            # sort agents by excess budget in descending order based on the excess budget
+            agents_in_cubicle = [agent for _, agent in sorted(zip(excess_budgets, agents_in_cubicle), reverse=True)]
+
+            # demand for the cubicle - add the demand of the agents that are assigned to the cubicle
+            demand = np.array([0] * self.numberofhalfdays)
+            for agent in agents_in_cubicle:
+                demand += self.agents[[i for i in range(len(self.agents)) if self.agents[i].name == agent][0]].current_assignment
+            
+            # if there is an empty slot in the cubicle
+            
+            while np.any(demand == 0):
+                if verbose:
+                    print(f"Agents in cubicle {cubicle.number} are {agents_in_cubicle}")
+                    print(f"Demand for cubicle {cubicle.number} is {demand}")
+                # for the agent with the highest excess budget, find the best extra half-day
+                agent_name = agents_in_cubicle[0]
+                # get position of agent in list of agents
+                agent_index = [i for i in range(len(self.agents)) if self.agents[i].name == agent_name][0]
+
+                empty_slots = [1 if demand[i] == 0 else 0 for i in range(len(demand))]
+                best_extra_halfday = self.agents[agent_index].find_best_extra_halfday(empty_slots)
+                if verbose:
+                    print(f"Agent {self.agents[agent_index].name} takes half-day {best_extra_halfday}")
+                # update the demand
+                demand[best_extra_halfday] = 1
+                # update the current assignment of the agent
+                assignment = self.agents[agent_index].current_assignment.copy()
+                assignment[best_extra_halfday] = 1
+                self.agents[agent_index].current_assignment = assignment
+                if verbose:
+                    print(f"Agent {self.agents[agent_index].name} is now assigned to {self.agents[agent_index].current_assignment}")
+                # update the excess budget of the agent
+                self.agents[agent_index].excess_budget -= self.prices_vec[self.cubicles_names.index(cubicle.number) * self.numberofhalfdays + best_extra_halfday]
+                
+                excess_budgets = [agent.excess_budget for agent in self.agents if agent.cubicle == cubicle.number]
+                # sort agents by excess budget in descending order based on the excess budget
+                agents_in_cubicle = [agent for _, agent in sorted(zip(excess_budgets, agents_in_cubicle), reverse=True)]
+                agents_in_cubicle = [agent for _, agent in sorted(zip(excess_budgets, agents_in_cubicle), reverse=True)]
 
 
-def main(find_ACE = True, pricing_out = True, verbose = True, try_price = False, pricing_in = False):
+
+def main(find_ACE = True, pricing_out = True, verbose = True, try_price = False, pricing_in = False, filling_empty_slots = False):
     # generate agents 
+    # set random seed
+    
 
     U_Alice = np.zeros((4, 4))
-    np.fill_diagonal(U_Alice, [10, 9, 8, 7])
+    np.fill_diagonal(U_Alice, [10, 5, 5, 4])
     U_Bob = np.zeros((4, 4))
     np.fill_diagonal(U_Bob, [10, 9, 8, 7])
     U_Charlie = np.zeros((4, 4))
@@ -402,25 +453,29 @@ def main(find_ACE = True, pricing_out = True, verbose = True, try_price = False,
     U_David = np.zeros((4, 4))
     np.fill_diagonal(U_David, [8, 10, 7, 9])
     agents = [Agent("Alice", U_Alice, 100), Agent("Bob", U_Bob, 101), Agent("Charlie", U_Charlie, 102), Agent("David", U_David, 103)]
-    # generate 2 cublicles
+    # generate 2 cubicles
     cubicle_1 = Cubicle("C1", [10, 20, 30, 40])
     cubicle_2 = Cubicle("C2", [15, 25, 35, 45])
-    cublicles = [cubicle_1, cubicle_2]
+    cubicles = [cubicle_1, cubicle_2]
     # create a market instance
-    market = Market(agents, cublicles, maxing_price=True)
-    # print the prices of the cublicles
+    market = Market(agents, cubicles, maxing_price=True)
+    # print the prices of the cubicles
     print(market.prices_vec)
     # solve for the allocation
     if find_ACE:
-        market.find_ACE()
-        market.print_allocation()
+        market.find_ACE(N = 100)
+        market.print_ACE()
 
     if pricing_out:
         market.pricing_out(verbose=True)
-        market.print_allocation()
+        market.print_ACE()
 
     if pricing_in:
         market.pricing_in(verbose=True)
+        market.print_ACE()
+    
+    if filling_empty_slots:
+        market.filling_empty_slots(verbose = True)
         market.print_allocation()
 
     if try_price:
@@ -433,4 +488,4 @@ def main(find_ACE = True, pricing_out = True, verbose = True, try_price = False,
 
 
 if __name__ == "__main__":
-    main(find_ACE=True, pricing_out=False, verbose=True, try_price=True, pricing_in=True)
+    main(find_ACE=True, pricing_out=False, verbose=True, try_price=False, pricing_in=False, filling_empty_slots=True)
