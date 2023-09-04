@@ -79,8 +79,38 @@ class Agent:
             return demand
 
         return demand
-
+    
+    def find_best_extra_halfday(self, empty_slots):
+        """This method finds the best extra half-day for the agent to take, given a list of empty slots.
         
+        Args:
+            empty_slots (list): A list of 0 and 1 indicating which slots are empty, where 1 means empty and 0 means full.
+        
+        Returns:
+            int: The index of the best extra half-day for the agent to take.
+        """
+
+        # compute the utility of the agent for each extra half-day based on their current assignment
+        utility = []
+        for i, slot in enumerate(empty_slots):
+            if slot == 1:
+                # slot is empty so compute the utility of the agent for this extra half-day
+                # find the alternative bundle
+                alternative_assignment = self.current_assignment.copy()
+                alternative_assignment[i] = 1
+                # compute the utility of the agent for the alternative bundle
+                utility.append(self.utility(alternative_assignment))
+
+            if slot == 0:
+                # slot is taken so utility is 0
+                utility.append(0)
+        
+        # find the extra half-day that maximizes the utility of the agent
+        max_utility = max(utility)
+        best_extra_halfday = [i for i in range(len(utility)) if utility[i] == max_utility][0]
+
+        return best_extra_halfday
+
         
 
 
