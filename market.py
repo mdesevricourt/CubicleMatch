@@ -313,6 +313,56 @@ class Market:
             # get the excess demand
             excess_demand = self.excess_demand()
             i += 1
+    
+    def pricing_in(self, verbose = False):
+        """Implements a pricing in algorithm to get rid of excess supply."""
+        print("Running pricing in algorithm")
+        # get the excess demand
+        excess_demand = self.excess_demand()
+        i = 0
+        # get clearing error 
+        alpha_0, z, d = self.clearing_error()
+        prices_0 = self.prices_vec.copy()
+        # if there is excess demand, return
+        if np.any(excess_demand > 0):
+            print("There is excess demand, cannot run pricing in algorithm")
+            return
+        # if there is excess supply, decrease the price of the item with the highest excess supply so it becomes just affordable for the agent with the higest excess budget
+        
+        while np.any(excess_demand < 0):
+            if verbose:
+                print(f"Iteration {i}, excess demand: {excess_demand}")
+            # get the prices
+            prices = self.prices_vec.copy()
+            # find item with highest excess demand, in case of tie choose first one
+            min_excess_demand = np.min(excess_demand)
+            min_excess_demand_index = np.where(excess_demand == min_excess_demand)[0][0]
+            # find the corresponding cubicle
+            cubicle = self.cublicles[min_excess_demand_index // self.numberofhalfdays]
+            # among agents in that cubicle, find higest excess budget
+            agents_in_cubicle = [agent for agent in self.agents if agent.cublicle == cubicle.number]
+            max_excess_budget = max([agent.excess_budget for agent in agents_in_cubicle])
+            # decrease the price of the item with highest excess demand by exactly the highest excess budget
+            prices[min_excess_demand_index] -= max_excess_budget
+            # update the prices
+            self.prices_vec = prices
+            # if new clearing error is higher than old clearing error, revert to old prices
+            alpha, z, d = self.clearing_error()
+            if alpha > alpha_0:
+                if verbose:
+                    print(f"New clearing error {alpha} is higher than old clearing error {alpha_0}, reverting to old prices")
+                self.prices_vec = prices_0
+                break
+            else:
+                if verbose:
+                    print(f"New clearing error {alpha} is lower than old clearing error {alpha_0}, keeping new prices")
+                alpha_0 = alpha
+                prices_0 = prices
+                if alpha == 0:
+                    break
+            i += 1
+
+
 
     def filling_empty_slots(self):
         """This function fills the empty slots in each cubicle with agents that are assigned to have cubicle, in the order of excess budget"""
