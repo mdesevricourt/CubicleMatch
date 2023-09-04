@@ -149,7 +149,7 @@ class Market:
 
         # clearing error is excess demand if price is not 0, 0 otherwise
         z = np.array([excess_demand[i] if prices [i] != 0 else np.max([excess_demand[i]], 0) for i in range(len(prices))])
-        alpha = np.sqrt(np.sum(z**2))
+        alpha = np.sum(z**2)
 
 
         return alpha, z, excess_demand
