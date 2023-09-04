@@ -51,7 +51,6 @@ class TestMarket(unittest.TestCase):
         np.fill_diagonal(U_Alice, [1, 0, 1, 0])
         U_Bob = np.zeros((4, 4))
         np.fill_diagonal(U_Bob, [0, 1, 0, 1])
-        budgets = 10
         agents = [Agent("Alice", U_Alice, 100), Agent("Bob", U_Bob, 100)]
         # create some sample cubicles with different prices
         cubicles = [Cubicle("C1", [10, 20, 30, 40]), Cubicle("C2", [15, 25, 35, 45])]
@@ -116,13 +115,24 @@ class TestMarket(unittest.TestCase):
         self.assertEqual(actual_cubicle, expected_cubicle)
 
     def test_aggregate_demand(self):
-        # test that the aggregate_demand method returns a dictionary of the aggregate demand for each cubicle
-        # create a sample bundle of half-days (a numpy array of zeros and ones)
+
         expected_aggregate_demand = np.array([1, 1, 1, 1, 0, 0, 0, 0])
         actual_aggregate_demand = self.market.aggregate_demand()
-        print(self.market.cublicles_names)
         self.assertEqual(actual_aggregate_demand, expected_aggregate_demand.tolist())
+
+    def test_excess_demand(self):
+        expected_excess_demand = np.array([0, 0, 0, 0,-1, -1, -1, -1])
+        actual_excess_demand = self.market.excess_demand()
+        self.assertEqual(actual_excess_demand.tolist(), expected_excess_demand.tolist())
     
+    def test_find_neighbors(self):
+        expected_neighbor1 = np.array([10, 20, 30, 40, 15, 25, 35, 0])
+        expected_neighbor2 = np.array([10, 20, 30, 40, 15, 25, 0, 45])
+        actual_neighbor_list = self.market.find_neighbors([10, 20, 30, 40, 15, 25, 35, 45])
+        actual_neighbor_list = [neighbor[0] for neighbor in actual_neighbor_list]
+        print(actual_neighbor_list)
+        self.assertTrue(any (np.array_equal(expected_neighbor1, actual_neighbor) for actual_neighbor in actual_neighbor_list))
+        self.assertTrue(any (np.array_equal(expected_neighbor2, actual_neighbor) for actual_neighbor in actual_neighbor_list))
 
 if __name__ == "__main__":
     unittest.main()
