@@ -230,6 +230,7 @@ class Market:
             dict: A dictionary of the form {agent: cublicle} that represents the allocation of the cublicles to the agents
             numpy array: A numpy array of the form [price_cublicle_1_half_day_1, price_cublicle_1_half_day_2, ..., price_cublicle_2_half_day_1, ...] that represents the prices of the cublicles"
         """
+        print("Running ACE algorithm")
         total_budget = sum([agent.budget for agent in self.agents])
         # initialize the prices of the haldayfs per cublicle to total budget/number of half-days
 
@@ -290,6 +291,7 @@ class Market:
     def pricing_out(self, verbose = False):
         """Implements the pricing out algorithm to get rid of excess demand."""
 
+        print("Running pricing out algorithm")
         
         # get the excess demand
         excess_demand = self.excess_demand()
@@ -319,7 +321,7 @@ class Market:
             pass
 
 
-def main(find_ACE = True, pricing_out = True, verbose = True):
+def main(find_ACE = True, pricing_out = True, verbose = True, try_price = False, pricing_in = False):
     # generate agents 
 
     U_Alice = np.zeros((4, 4))
@@ -342,26 +344,24 @@ def main(find_ACE = True, pricing_out = True, verbose = True):
     # solve for the allocation
     if find_ACE:
         market.find_ACE()
-        print(f"Prices: {market.prices_vec}")
-        print(f"Excess budgets: {market.excess_budgets}")
-        print(f"Aggregate demand: {market.aggregate_demand(verbose=True)}")
-        print(f"Excess demand: {market.excess_demand()}")
-        print(f"Clearing error: {market.clearing_error()[0]}")
-        print(f"Alice's assignment & Cublicle: {market.agents[0].current_assignment}, {market.agents[0].cublicle}")
-        print(f"Bob's assignment & Cublicle: {market.agents[1].current_assignment}, {market.agents[1].cublicle}")
-        print(f"Charlie's assignment & Cublicle: {market.agents[2].current_assignment}, {market.agents[2].cublicle}")
-        print(f"David's assignment & Cubicle: {market.agents[3].current_assignment}, {market.agents[3].cublicle}")
+        market.print_allocation()
 
     if pricing_out:
         market.pricing_out(verbose=True)
-        print(f"Prices: {market.prices_vec}")
-        print(f"Excess budgets: {market.excess_budgets}")
-        print(f"Aggregate demand: {market.aggregate_demand(verbose=True)}")
-        print(f"Excess demand: {market.excess_demand()}")
-        print(f"Clearing error: {market.clearing_error()[0]}")
-        print(f"Alice's assignment & Cubicle: {market.agents[0].current_assignment}, {market.agents[0].cublicle}")
-        print(f"Bob's assignment & Cubicle: {market.agents[1].current_assignment}, {market.agents[1].cublicle}")
-        print(f"Charlie's assignment & Cubicle: {market.agents[2].current_assignment}, {market.agents[2].cublicle}")
+        market.print_allocation()
+
+    if pricing_in:
+        market.pricing_in(verbose=True)
+        market.print_allocation()
+
+    if try_price:
+        p = np.array([50.5,50.5,50,50, 51, 51.5, 51, 51.5])
+        market.prices_vec = p
+        market.aggregate_demand(verbose=True)
+        market.print_allocation()
+
+
+
 
 if __name__ == "__main__":
-    main()
+    main(find_ACE=True, pricing_out=False, verbose=True, try_price=True, pricing_in=True)
