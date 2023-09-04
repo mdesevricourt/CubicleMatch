@@ -72,7 +72,7 @@ class Market:
         if self.maxing_price: 
             for bundle in bundles:
                 for cubicle in self.cublicles:
-                    price, _ = cubicle.price_bundle(bundle)
+                    price = cubicle.price_bundle(bundle)
                     priced_bundles.append((bundle, cubicle.number, price))
         else:
             for bundle in bundles:
@@ -313,7 +313,7 @@ def main(find_ACE = True, pricing_out = True, verbose = True):
     U_Alice = np.zeros((4, 4))
     np.fill_diagonal(U_Alice, [10, 9, 8, 7])
     U_Bob = np.zeros((4, 4))
-    np.fill_diagonal(U_Bob, [7, 8, 9, 10])
+    np.fill_diagonal(U_Bob, [10, 9, 8, 7])
     U_Charlie = np.zeros((4, 4))
     np.fill_diagonal(U_Charlie, [10, 8, 9, 7])
     U_David = np.zeros((4, 4))
@@ -340,7 +340,7 @@ def main(find_ACE = True, pricing_out = True, verbose = True):
         print(f"Charlie's assignment & Cublicle: {market.agents[2].current_assignment}, {market.agents[2].cublicle}")
         print(f"David's assignment & Cubicle: {market.agents[3].current_assignment}, {market.agents[3].cublicle}")
 
-    if pricing_out
+    if pricing_out:
         market.pricing_out(verbose=True)
         print(f"Prices: {market.prices_vec}")
         print(f"Excess budgets: {market.excess_budgets}")
@@ -352,4 +352,4 @@ def main(find_ACE = True, pricing_out = True, verbose = True):
         print(f"Charlie's assignment & Cubicle: {market.agents[2].current_assignment}, {market.agents[2].cublicle}")
 
 if __name__ == "__main__":
-    
+    main()
