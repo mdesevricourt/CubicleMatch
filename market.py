@@ -235,19 +235,32 @@ class Market:
         # initialize the prices of the haldayfs per cublicle to total budget/number of half-days
 
         besterror = np.inf
+        best_number_excess_demand = np.inf
         pstar = None
         type_neighbor_selected = {}
         # run the algorithm 100 times
-        for i in range(200):
+        for i in range(50):
             # max budget times random draw from uniform distribution
             p = self.max_budget * np.random.rand(len(self.prices_vec))
+            # p = total budget / (number of half-days * number of cubicles) + random error
+            p = total_budget / (self.numberofhalfdays * self.numberofcublicles) + 2* np.random.rand(len(self.prices_vec))
             self.prices_vec = p # set the prices of the cublicles to p
             # find the neighbors of p_0
             tabu_list = []
             c = 0
             searcherror = self.clearing_error()[0]
+            search_number_excess_demand = np.sum(self.excess_demand() > 0)
+
             if verbose:
-                print(f"Running iteration {i}, best error so far is {besterror}, search error to beat is {searcherror}")
+                print1 = f"Running iteration {i} \n"
+                print2 = f"\tBest error: {besterror}, \n\tBest number of excessively demanded half_days: {best_number_excess_demand}\n"
+                print3 = f"\tSearch error: {searcherror}, \n\tnumber of excessively demanded half_days to beat is {search_number_excess_demand}\n"
+
+                # Print with color and indentation
+                print('\033[34m' + print1 + '\033[0m', end='')
+                print(print2, end='')
+                print(print3, end='')
+
             while c < 5:
     
                 neighbors, tuple = self.find_neighbors(p)
@@ -280,6 +293,10 @@ class Market:
                         besterror = currenterror
                         pstar = p
 
+                    elif currenterror == besterror and np.sum(z > 0) < best_number_excess_demand:
+                            best_number_excess_demand = np.sum(z > 0)
+                            pstar = p
+
             if besterror == 0:
                 print(f"Found allocation with error 0 at iteration {i}")
                 break
@@ -290,7 +307,6 @@ class Market:
 
     def pricing_out(self, verbose = False):
         """Implements the pricing out algorithm to get rid of excess demand."""
-
         print("Running pricing out algorithm")
         
         # get the excess demand
@@ -368,7 +384,10 @@ class Market:
         """This function fills the empty slots in each cubicle with agents that are assigned to have cubicle, in the order of excess budget"""
 
         for cubicle in self.cublicles:
-            pass
+            # get the agents that are assigned to the cubicle
+            agents_in_cubicle = [agent for agent in self.agents if agent.cublicle == cubicle.number]
+
+            
 
 
 def main(find_ACE = True, pricing_out = True, verbose = True, try_price = False, pricing_in = False):
