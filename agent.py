@@ -14,6 +14,7 @@ class Agent:
 
         self.U = np.array(U)
         self.budget = budget
+        self.current_assignment = None
 
     def utility(self, x):
         """Return the utility of a person for a given assignment across all half-days"""
@@ -37,10 +38,22 @@ class Agent:
         if len(feasible_bundles) == 0:
             return None
 
-        # get the bundle that maximizes the utility of the person
-        bundle, cubicle, price = max(feasible_bundles, key=lambda x: self.utility(x[0]))
+        # compute utility of feasible bundles
+        utility = [self.utility(priced_bundle[0]) for priced_bundle in feasible_bundles]
+        
 
-        return bundle, cubicle, price
+        # get the bundles that maximize the utility of the person
+        max_utility = max(utility)
+        maximizers = [feasible_bundles[i] for i in range(len(feasible_bundles)) if utility[i] == max_utility]
+
+        # if there is only one bundle that maximizes the utility of the person, return it
+        if len(maximizers) == 1:
+            return maximizers[0]
+        
+        # if there are multiple bundles that maximize the utility of the person, return the one with the lowest price
+        min_price = min([priced_bundle[2] for priced_bundle in maximizers])
+        return [priced_bundle for priced_bundle in maximizers if priced_bundle[2] == min_price][0]
+
         
         
 
