@@ -45,6 +45,17 @@ class Market:
         # use the update prices_array method
         self.prices_array = prices
 
+    def print_allocation(self):
+        """Print the allocation of the agents to the cublicles"""
+        print(f"With prices: {self.prices_vec},")
+        print(f"Aggregate demand: {self.aggregate_demand(verbose=True)},")
+        print(f"and a clearing error of {self.clearing_error()[0]},")
+        print(f"Agents are assigned to cublicles as follows:")
+        for agent in self.agents:
+            print(f"{agent.name} is assigned to {agent.cublicle} with bundle {agent.current_assignment}, with excess budget {agent.excess_budget}")
+        print(f"Prices: {self.prices_vec}")
+        
+
     def price_bundle(self, bundle):
         """Return the lowest price of a bundle of half-days across all cublicles, as well as the name of the cubicle that has the lowest price"""
         # create a dictionary of the prices of all the cublicles
