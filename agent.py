@@ -14,8 +14,26 @@ class Agent:
 
         self.U = np.array(U)
         self.budget = budget
-        self.current_assignment = None
+        self._current_assignment = None
+        self._cubicle = None
+        self.excess_budget = 0
 
+    @property
+    def cublicle(self):
+        return self._cubicle
+    
+    @cublicle.setter
+    def cublicle(self, cubicle):
+        self._cubicle = cubicle
+    
+    @property
+    def current_assignment(self):
+        return self._current_assignment
+
+    @current_assignment.setter
+    def current_assignment(self, assignment):
+        self._current_assignment = assignment
+    
     def utility(self, x):
         """Return the utility of a person for a given assignment across all half-days"""
         x = np.array(x)
@@ -23,6 +41,7 @@ class Agent:
         return utility
     
     def find_agent_demand(self, priced_bundles):
+    def find_agent_demand(self, priced_bundles, maxing_price = False):
         """Return the assignment that maximizes the utility of the person
         
         Args:
