@@ -19,11 +19,11 @@ class Agent:
         self.excess_budget = 0
 
     @property
-    def cublicle(self):
+    def cubicle(self):
         return self._cubicle
     
-    @cublicle.setter
-    def cublicle(self, cubicle):
+    @cubicle.setter
+    def cubicle(self, cubicle):
         self._cubicle = cubicle
     
     @property
