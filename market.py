@@ -307,10 +307,9 @@ class Market:
             pass
 
 
-        
+def main(find_ACE = True, pricing_out = True, verbose = True):
+    # generate agents 
 
-if __name__ == "__main__":
-    # generate 2 agents 
     U_Alice = np.zeros((4, 4))
     np.fill_diagonal(U_Alice, [10, 9, 8, 7])
     U_Bob = np.zeros((4, 4))
@@ -329,24 +328,28 @@ if __name__ == "__main__":
     # print the prices of the cublicles
     print(market.prices_vec)
     # solve for the allocation
-    market.find_ACE()
-    print(f"Prices: {market.prices_vec}")
-    print(f"Excess budgets: {market.excess_budgets}")
-    print(f"Aggregate demand: {market.aggregate_demand(verbose=True)}")
-    print(f"Excess demand: {market.excess_demand()}")
-    print(f"Clearing error: {market.clearing_error()[0]}")
-    print(f"Alice's assignment & Cublicle: {market.agents[0].current_assignment}, {market.agents[0].cublicle}")
-    print(f"Bob's assignment & Cublicle: {market.agents[1].current_assignment}, {market.agents[1].cublicle}")
-    print(f"Charlie's assignment & Cublicle: {market.agents[2].current_assignment}, {market.agents[2].cublicle}")
-    print(f"David's assignment & Cubicle: {market.agents[3].current_assignment}, {market.agents[3].cublicle}")
+    if find_ACE:
+        market.find_ACE()
+        print(f"Prices: {market.prices_vec}")
+        print(f"Excess budgets: {market.excess_budgets}")
+        print(f"Aggregate demand: {market.aggregate_demand(verbose=True)}")
+        print(f"Excess demand: {market.excess_demand()}")
+        print(f"Clearing error: {market.clearing_error()[0]}")
+        print(f"Alice's assignment & Cublicle: {market.agents[0].current_assignment}, {market.agents[0].cublicle}")
+        print(f"Bob's assignment & Cublicle: {market.agents[1].current_assignment}, {market.agents[1].cublicle}")
+        print(f"Charlie's assignment & Cublicle: {market.agents[2].current_assignment}, {market.agents[2].cublicle}")
+        print(f"David's assignment & Cubicle: {market.agents[3].current_assignment}, {market.agents[3].cublicle}")
 
+    if pricing_out
+        market.pricing_out(verbose=True)
+        print(f"Prices: {market.prices_vec}")
+        print(f"Excess budgets: {market.excess_budgets}")
+        print(f"Aggregate demand: {market.aggregate_demand(verbose=True)}")
+        print(f"Excess demand: {market.excess_demand()}")
+        print(f"Clearing error: {market.clearing_error()[0]}")
+        print(f"Alice's assignment & Cubicle: {market.agents[0].current_assignment}, {market.agents[0].cublicle}")
+        print(f"Bob's assignment & Cubicle: {market.agents[1].current_assignment}, {market.agents[1].cublicle}")
+        print(f"Charlie's assignment & Cubicle: {market.agents[2].current_assignment}, {market.agents[2].cublicle}")
 
-    market.pricing_out(verbose=True)
-    print(f"Prices: {market.prices_vec}")
-    print(f"Excess budgets: {market.excess_budgets}")
-    print(f"Aggregate demand: {market.aggregate_demand(verbose=True)}")
-    print(f"Excess demand: {market.excess_demand()}")
-    print(f"Clearing error: {market.clearing_error()[0]}")
-    print(f"Alice's assignment & Cubicle: {market.agents[0].current_assignment}, {market.agents[0].cublicle}")
-    print(f"Bob's assignment & Cubicle: {market.agents[1].current_assignment}, {market.agents[1].cublicle}")
-    print(f"Charlie's assignment & Cubicle: {market.agents[2].current_assignment}, {market.agents[2].cublicle}")
+if __name__ == "__main__":
+    
