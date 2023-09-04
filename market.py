@@ -112,7 +112,8 @@ class Market:
             if bundle is not None:
                 # update the demand for that cublicle
                 demand_for_cublicles[self.cublicles_names.index(cubicle) * self.numberofhalfdays: self.cublicles_names.index(cubicle) * self.numberofhalfdays + self.numberofhalfdays] += bundle
-        
+                agent.excess_budget = agent.budget - self.price_bundle(bundle)[0]
+
         
         return demand_for_cublicles
     
