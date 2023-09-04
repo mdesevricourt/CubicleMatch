@@ -40,7 +40,6 @@ class Agent:
         utility = np.matmul(np.matmul(x.T, self.U), x) 
         return utility
     
-    def find_agent_demand(self, priced_bundles):
     def find_agent_demand(self, priced_bundles, maxing_price = False):
         """Return the assignment that maximizes the utility of the person
         
@@ -70,8 +69,16 @@ class Agent:
             return maximizers[0]
         
         # if there are multiple bundles that maximize the utility of the person, return the one with the lowest price
-        min_price = min([priced_bundle[2] for priced_bundle in maximizers])
-        return [priced_bundle for priced_bundle in maximizers if priced_bundle[2] == min_price][0]
+        if maxing_price:
+            max_price = max([priced_bundle[2] for priced_bundle in maximizers])
+            demand = [priced_bundle for priced_bundle in maximizers if priced_bundle[2] == max_price][0]
+            return demand
+        else:
+            min_price = min([priced_bundle[2] for priced_bundle in maximizers])
+            demand = [priced_bundle for priced_bundle in maximizers if priced_bundle[2] == min_price][0]
+            return demand
+
+        return demand
 
         
         
