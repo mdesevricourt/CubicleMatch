@@ -4,10 +4,11 @@ import numpy as np
 
 
 class Cubicle:
-    def __init__(self, number, prices) -> None:
+    def __init__(self, number, numberofhalfdays) -> None:
         self.number = str(number)
-        self._prices = prices
-        self.numberofhalfdays = len(prices)
+        self._prices = np.zeros(numberofhalfdays)
+        self.numberofhalfdays = numberofhalfdays
+        
 
     @property
     def prices(self):
