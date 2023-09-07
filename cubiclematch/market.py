@@ -5,6 +5,7 @@ import random
 import itertools
 import pandas as pd
 import os
+import time
 
 from agent import Agent
 
@@ -23,6 +24,21 @@ class Market:
         self.bundles = [np.array(t) for t in itertools.product([0, 1], repeat=self.numberofhalfdays)]
         self.max_budget = max([agent.budget for agent in agents])
         self.maxing_price = maxing_price
+        self.CC_found = False
+        self.best_error = np.inf
+        self.pstar_type = None
+        self.pstar = None
+
+    def guess_prices(self):
+        """Returns a guess for the prices of the cubicles close to the average price of the cubicles if everybody exhausted their budget"""
+        total_budget = sum([agent.budget for agent in self.agents])
+        # beta_list = [0.1, 0.5, 1, 2,3,4,5, 6,7,8,9,10]
+        # randomly choose a beta
+        beta = 1
+        # print(f"beta is {beta}")
+        
+        self.prices_vec = total_budget / (self.numberofhalfdays * self.numberofcubicles) + beta*np.random.uniform(-1, 1, len(self.prices_vec))
+    
     @property
     def prices_array(self):
         """Returns the prices of the cubicles in a numpy array"""
@@ -185,7 +201,7 @@ class Market:
                 # if there is excess demand for i, increase p[i] until at least one fewer agent demands the item
                 d_neighbor_i = d[i]
                 while d_neighbor_i >= d[i]:
-                    neigbor_type.append("individual adjustment with excess demand")
+                    neigbor_type.append("individual adjustment neighbor with excess demand")
                     p_neighbor[i] += min(self.excess_budgets) + 0.01
                     # update price
                     self.prices_vec = p_neighbor
@@ -193,7 +209,7 @@ class Market:
                     d_neighbor_i = d_neighbor[i]
             else:
                 # if there is excess supply for i, decrease p[i] until at least one more agent demands the item
-                neigbor_type.append("individual adjustment with excess supply")
+                neigbor_type.append("individual adjustment neighbor with excess supply")
                 p_neighbor[i] = 0
                 # update price
                 self.prices_vec = p_neighbor
@@ -211,7 +227,7 @@ class Market:
         lambda_list = [0.1, 0.5, 1, 2,3,4,5, 6,7,8,9,10]
         for l in lambda_list:
             p_neighbor = p.copy()
-            neigbor_type.append(f"gradient adjustment with lambda = {l}")
+            neigbor_type.append(f"gradient adjustment neighbor with lambda = {l}")
             p_neighbor = p_neighbor + l * z
             # keep the prices above 0
             p_neighbor = np.maximum(p_neighbor, 0)
@@ -231,7 +247,8 @@ class Market:
         return neighbors, (alpha, z, d)
     
 
-    def find_ACE(self, N = 1000, verbose = True):
+
+    def find_ACE(self, N = 1000, time_allowed = 0, verbose = True):
         """Implements Approximate Competitive Equilibrium from Equal Incomes (ACEEI) algorithm to find an allocation of the cubicles to the agents
         
         Returns: 
@@ -247,13 +264,27 @@ class Market:
         pstar = None
         type_neighbor_selected = {}
         # run the algorithm 100 times
-        for i in range(N):
+        i = 0
+        # start timer
+        start = time.time()
+        time_elapsed = 0
+        number_selected_uniform_price = 0
+
+        while i < N or time_elapsed < time_allowed:
+            i += 1
             # with probability 0.5, initialize the prices of the half-days per cubicle to max budget * random number between 0 and 1
-            if np.random.rand() < 0.5:
+            if i == 1: # for first iteration, check current guess
+                p = self.prices_vec 
+                p_type = "initial guess"           
+            elif np.random.rand() < 0.5:
                 p = self.max_budget * np.random.rand(len(self.prices_vec))
+                p_type = "random"
             else:
                 # error drawn from uniform distribution between -1 and 1
-                p = total_budget / (self.numberofhalfdays * self.numberofcubicles) + np.random.uniform(-1, 1, len(self.prices_vec))
+                number_selected_uniform_price += 1
+                beta =  number_selected_uniform_price // 100 + 1
+                p = total_budget / (self.numberofhalfdays * self.numberofcubicles) + beta*np.random.uniform(-1, 1, len(self.prices_vec))
+                p_type = f"uniform with beta = {beta}"
             # p = total budget / (number of half-days * number of cubicles) + random error
             
             self.prices_vec = p # set the prices of the cubicles to p
@@ -262,6 +293,13 @@ class Market:
             c = 0
             searcherror = self.clearing_error()[0]
             search_number_excess_demand = np.sum(self.excess_demand() > 0)
+            # check if search error is better than best error
+            if searcherror < besterror or (searcherror == besterror and search_number_excess_demand < best_number_excess_demand):
+                besterror = searcherror
+                best_number_excess_demand = search_number_excess_demand
+                pstar = p
+                pstar_type = p_type
+                
 
             if verbose:
                 print1 = f"Running iteration {i} \n"
@@ -274,8 +312,11 @@ class Market:
                 print(print3, end='')
 
             while c < 5:
-    
+                if verbose:
+                    print(f"\t\tc= {c}")
                 neighbors, tuple = self.find_neighbors(p)
+                if verbose:
+                    print(f"\t\t\tFound {len(neighbors)} neighbors")
                 alpha, z, d = tuple
                 foundnextstep = False
 
@@ -286,39 +327,56 @@ class Market:
                     d_in_tabu = np.any([np.allclose(d, d_tabu) for d_tabu in tabu_list])
 
                     if not d_in_tabu:
+            
                         foundnextstep = True
                         type_neighbor_selected[neighbor[3]] = type_neighbor_selected.get(neighbor[3], 0) + 1
+                        p_neighbor_type = neighbor[3] + " of " + p_type
                         break
+
+                
                 if foundnextstep == False:
-                    c = 5
-                    
+                    if verbose:
+                        print(f"\t\t\tNo neighbor found that is not in the tabu list")
+                    c = 5 
                 else:
-                    p = p_tilde
+                    self.price_vec = p_tilde
                     tabu_list.append(d)
                     currenterror = neighbor[1]
                     if currenterror < searcherror:
                         searcherror = currenterror
                         c = 0
+                        if verbose:
+                            print(f"\t\t\tFound a neighbor that is not in the tabu list, with smaller error: {currenterror}")
+                            print(f"\t\t\tSetting c to 0")
                     else:
+                        if verbose:
+                            print(f"\t\t\tFound a neighbor that is not in the tabu list, with larger error: {currenterror}")
                         c += 1
-                    if currenterror < besterror:
+                    if currenterror < besterror or (currenterror == besterror and np.sum(z > 0) < best_number_excess_demand):
                         besterror = currenterror
-                        pstar = p
+                        pstar = self.price_vec.copy()
+                        pstar_type = p_neighbor_type
+                        if currenterror == 0:
+                            break
 
-                    elif currenterror == besterror and np.sum(z > 0) < best_number_excess_demand:
-                            best_number_excess_demand = np.sum(z > 0)
-                            pstar = p
-
+            time_elapsed = time.time() - start
+            if verbose:
+                print(f"\tTime elapsed: {time_elapsed}")
             if besterror == 0:
                 print(f"Found allocation with error 0 at iteration {i}")
                 break
 
         self.pstar = pstar
         self.prices_vec = pstar
+        self.price_type = pstar_type
         self.excess_demand() # make sure ACE is computed
+        alpha, z, d = self.clearing_error()
+        if alpha == 0:
+            self.CC_found = True
         self.neighbor_type_selected = type_neighbor_selected
 
-    def pricing_out(self, verbose = False):
+    # add argument to specify how often print statements should be printed
+    def pricing_out(self, verbose = False, print_every = 100):
         """Implements the pricing out algorithm to get rid of excess demand."""
         print("Running pricing out algorithm")
         
@@ -327,16 +385,24 @@ class Market:
         # while there is excess demand
         i = 0
         while np.any(excess_demand > 0):
-            if verbose:
-                print(f"Iteration {i}, excess demand: {excess_demand}")
+            if verbose and i % print_every == 0:
+                print(f"Iteration {i}, total excess demand: {excess_demand}")
+                print(f"Current prices: {self.prices_vec}")
             # get the prices
             prices = self.prices_vec.copy()
             # find item with highest excess demand, in case of tie choose first one
             max_excess_demand = np.max(excess_demand)
             max_excess_demand_index = np.where(excess_demand == max_excess_demand)[0][0]
             # increase the price of the item with highest excess demand by the minimum excess budget plus 0.01
+            # find the corresponding cubicle
+            cubicle = self.cubicles[max_excess_demand_index // self.numberofhalfdays]
+            # item demanded
+            item_demanded = max_excess_demand_index % self.numberofhalfdays
+            # among agents in that cubicle, find lowest excess budget
+            agents_in_cubicle = [agent for agent in self.agents if agent.cubicle == cubicle.number and agent.current_assignment[item_demanded] == 1]
+            min_excess_budget = min([agent.excess_budget for agent in agents_in_cubicle])
                        
-            prices[max_excess_demand_index] += min(self.excess_budgets) + 0.01
+            prices[max_excess_demand_index] += max([min_excess_budget, 0.01]) + 0.01
             # update the prices
             self.prices_vec = prices
             # get the excess demand
@@ -398,46 +464,60 @@ class Market:
             
             # get the agents that are assigned to the cubicle
             agents_in_cubicle = [agent.name for agent in self.agents if agent.cubicle == cubicle.number]
-            # get agent's excess budget
-            excess_budgets = [agent.excess_budget for agent in self.agents if agent.cubicle == cubicle.number]
-            # sort agents by excess budget in descending order based on the excess budget
-            agents_in_cubicle = [agent for _, agent in sorted(zip(excess_budgets, agents_in_cubicle), reverse=True)]
+            # get agent's budget
+            budgets = [agent.budget for agent in self.agents if agent.cubicle == cubicle.number]
+            # get number of halfdays assigned
+            n_halfdays = [np.sum(agent.current_assignment) for agent in self.agents if agent.cubicle == cubicle.number]
+            agent_tuples = list(zip(agents_in_cubicle, budgets, n_halfdays))
+            # sort by ascending n_halfdays, and then by ascending budget
+            agent_tuples = sorted(agent_tuples, key=lambda x: (x[2], x[1]))
+            # get the agents in the right order
+            agents_in_cubicle = [agent_tuple[0] for agent_tuple in agent_tuples]
 
+            number_of_agents_in_cubicle = len(agents_in_cubicle)
             # demand for the cubicle - add the demand of the agents that are assigned to the cubicle
             demand = np.array([0] * self.numberofhalfdays)
+
             for agent in agents_in_cubicle:
                 demand += self.agents[[i for i in range(len(self.agents)) if self.agents[i].name == agent][0]].current_assignment
             
             # if there is an empty slot in the cubicle
-            
-            while np.any(demand == 0):
+            # get the number of empty slots
+            extra_utility_agents = 1
+            while np.any(demand == 0) and extra_utility_agents > 0:
                 if verbose:
                     print(f"Agents in cubicle {cubicle.number} are {agents_in_cubicle}")
                     print(f"Demand for cubicle {cubicle.number} is {demand}")
-                # for the agent with the highest excess budget, find the best extra half-day
-                agent_name = agents_in_cubicle[0]
-                # get position of agent in list of agents
-                agent_index = [i for i in range(len(self.agents)) if self.agents[i].name == agent_name][0]
-
-                empty_slots = [1 if demand[i] == 0 else 0 for i in range(len(demand))]
-                best_extra_halfday = self.agents[agent_index].find_best_extra_halfday(empty_slots)
-                if verbose:
-                    print(f"Agent {self.agents[agent_index].name} takes half-day {best_extra_halfday}")
-                # update the demand
-                demand[best_extra_halfday] = 1
-                # update the current assignment of the agent
-                assignment = self.agents[agent_index].current_assignment.copy()
-                assignment[best_extra_halfday] = 1
-                self.agents[agent_index].current_assignment = assignment
-                if verbose:
-                    print(f"Agent {self.agents[agent_index].name} is now assigned to {self.agents[agent_index].current_assignment}")
-                # update the excess budget of the agent
-                self.agents[agent_index].excess_budget -= self.prices_vec[self.cubicles_names.index(cubicle.number) * self.numberofhalfdays + best_extra_halfday]
                 
-                excess_budgets = [agent.excess_budget for agent in self.agents if agent.cubicle == cubicle.number]
-                # sort agents by excess budget in descending order based on the excess budget
-                agents_in_cubicle = [agent for _, agent in sorted(zip(excess_budgets, agents_in_cubicle), reverse=True)]
-                agents_in_cubicle = [agent for _, agent in sorted(zip(excess_budgets, agents_in_cubicle), reverse=True)]
+                extra_utility_agents = 0
+                for agent_name in agents_in_cubicle:
+                    empty_slots = [1 if demand[i] == 0 else 0 for i in range(len(demand))]
+                    # get position of agent in list of agents
+                    agent_index = [i for i in range(len(self.agents)) if self.agents[i].name == agent_name][0]
+                    best_extra_halfday, extra_utility = self.agents[agent_index].find_best_extra_halfday(empty_slots)
+                    
+                    extra_utility_agents += extra_utility
+                    if extra_utility > 0:
+                        if verbose:
+                            print(f"Agent {self.agents[agent_index].name} takes half-day {best_extra_halfday}")
+                        # update the demand
+                        demand[best_extra_halfday] = 1
+                        # update the current assignment of the agent
+                        assignment = self.agents[agent_index].current_assignment.copy()
+                        assignment[best_extra_halfday] = 1
+                        self.agents[agent_index].current_assignment = assignment
+                        if verbose:
+                            print(f"Agent {self.agents[agent_index].name} is now assigned to {self.agents[agent_index].current_assignment}")
+                        
+                    # if there is no more empty slot, break
+                    if np.all(demand == 1):
+                        if verbose:
+                            print(f"No more empty slots for cubicle {cubicle.number}")
+                        break
+                    elif extra_utility_agents == 0:
+                        if verbose:
+                            print(f"Agents do not care about empty slots in cubicle {cubicle.number} anymore.")
+                        break
 
     def export_allocation(self, filename):
         """Export the allocation of the agents to a pandas dataframe. Each row is a cubicle, each column a half-day and each cell contains the name of the agent assigned to that half-day in that cubicle.
