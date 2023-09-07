@@ -7,7 +7,8 @@ import datetime
 
 import cubicle
 import agent
-import market
+from market import Market
+from alter import SmallMarket
 
 # set random seed
 
