@@ -67,7 +67,7 @@ def agent_builder(filename, verbose = False):
         # create an agent
         if verbose:
             print(f"Creating agent {name} with preferences {U} and budget {budget}")
-        agents.append(agent.Agent(name, U, budget))
+        agents.append(agent.Agent(name, U, budget, year=year))
     return agents
 
     
