@@ -3,6 +3,7 @@ import unittest
 from market import Market
 from cubicle import Cubicle
 from agent import Agent
+from alter import SmallMarket
 
 import numpy as np
 
@@ -42,6 +43,8 @@ class TestAgent(unittest.TestCase):
 
         return
 
+    
+
 class TestMarket(unittest.TestCase):
 
     # create a setUp method to initialize a Market instance with some sample data
@@ -53,7 +56,7 @@ class TestMarket(unittest.TestCase):
         np.fill_diagonal(U_Bob, [0, 1, 0, 1])
         agents = [Agent("Alice", U_Alice, 100), Agent("Bob", U_Bob, 100)]
         # create some sample cubicles with different prices
-        cubicles = [Cubicle("C1", [10, 20, 30, 40]), Cubicle("C2", [15, 25, 35, 45])]
+        cubicles = [Cubicle("C1",  prices = [10, 20, 30, 40]), Cubicle("C2",  prices = [15, 25, 35, 45])]
         # create a Market instance with the agents and cubicles
         self.market = Market(agents, cubicles)
 
@@ -128,9 +131,10 @@ class TestMarket(unittest.TestCase):
     def test_find_neighbors(self):
         expected_neighbor1 = np.array([10, 20, 30, 40, 15, 25, 35, 0])
         expected_neighbor2 = np.array([10, 20, 30, 40, 15, 25, 0, 45])
-        actual_neighbor_list = self.market.find_neighbors([10, 20, 30, 40, 15, 25, 35, 45])
+        actual_neighbor_list, _ = self.market.find_neighbors([10, 20, 30, 40, 15, 25, 35, 45])
+        
         actual_neighbor_list = [neighbor[0] for neighbor in actual_neighbor_list]
-        print(actual_neighbor_list)
+
         self.assertTrue(any (np.array_equal(expected_neighbor1, actual_neighbor) for actual_neighbor in actual_neighbor_list))
         self.assertTrue(any (np.array_equal(expected_neighbor2, actual_neighbor) for actual_neighbor in actual_neighbor_list))
 
