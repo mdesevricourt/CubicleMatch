@@ -42,7 +42,42 @@ class TestAgent(unittest.TestCase):
         self.assertEqual(cublicle, "1")
 
         return
+    
+    def test_best_extra_half_day(self):
+        """Test that the best extra half-day is the one that maximizes the utility of the agent."""
 
+        # create a list of empty slots
+        empty_slots = [1, 1]
+        self.agent_Alice.current_assignment = [0, 0]
+        # call the best_extra_half_day method
+        best_extra_halfday, extra_utility = self.agent_Alice.find_best_extra_halfday(empty_slots)
+        # check that the bundle is correct
+
+        expected_index = 0
+        actual_index = best_extra_halfday
+        # use assertEqual to compare lists
+        self.assertEqual(expected_index, actual_index)
+
+        # check that the utility is correct
+        expected_utility = 2
+        actual_utility = extra_utility
+        self.assertEqual(expected_utility, actual_utility)
+
+        empty_slots = [0, 1]
+        best_extra_halfday, extra_utility = self.agent_Alice.find_best_extra_halfday(empty_slots)
+        # check that the bundle is correct
+
+        expected_index = 1
+        actual_index = best_extra_halfday
+        # use assertEqual to compare lists
+        self.assertEqual(expected_index, actual_index)
+
+        # check that the utility is correct
+        expected_utility = 1
+        actual_utility = extra_utility
+        self.assertEqual(expected_utility, actual_utility)
+
+        return
     
 
 class TestMarket(unittest.TestCase):
