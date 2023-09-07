@@ -4,11 +4,18 @@ import numpy as np
 
 
 class Cubicle:
-    def __init__(self, number, numberofhalfdays) -> None:
+    def __init__(self, number, numberofhalfdays = None, prices = None) -> None:
         self.number = str(number)
-        self._prices = np.zeros(numberofhalfdays)
-        self.numberofhalfdays = numberofhalfdays
         
+        if prices is None:
+            self.numberofhalfdays = numberofhalfdays
+            self.prices = np.ones(numberofhalfdays)
+        else:
+            self.numberofhalfdays = len(prices)
+            self.prices = prices
+
+        
+        self._assigned_agents = []
 
     @property
     def prices(self):
@@ -26,4 +33,12 @@ class Cubicle:
     def price_bundle(self, bundle):
         """Return the price of a bundle of half-days"""
         return np.dot(self.prices, bundle)
+    
+    @property
+    def assigned_agents(self):
+        return self._assigned_agents
+    
+    @assigned_agents.setter
+    def assigned_agents(self, assigned_agents):
+        self._assigned_agents = assigned_agents
     
