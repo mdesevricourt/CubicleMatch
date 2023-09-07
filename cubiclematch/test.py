@@ -138,6 +138,45 @@ class TestMarket(unittest.TestCase):
         self.assertTrue(any (np.array_equal(expected_neighbor1, actual_neighbor) for actual_neighbor in actual_neighbor_list))
         self.assertTrue(any (np.array_equal(expected_neighbor2, actual_neighbor) for actual_neighbor in actual_neighbor_list))
 
+
+class TestSmallMarket(unittest.TestCase):
+
+    def setUp(self):
+
+        # create some 3 types of agents 
+        U_Alice = np.zeros((4, 4))
+        np.fill_diagonal(U_Alice, [1, 0, 1, 0])
+        U_Bob = np.zeros((4, 4))
+        np.fill_diagonal(U_Bob, [0, 1, 0, 1])
+        U_Carol = np.zeros((4, 4))
+        np.fill_diagonal(U_Carol, [1, 1, 1, 1])
+        # create 4 agents of type Alice
+        agents = [Agent("Alice ", U_Alice, 100) for i in range(4)]
+        # create 4 agents of type Bob
+        agents += [Agent("Bob", U_Bob, 101) for i in range(4)]
+        # create 4 agents of type Carol
+        agents += [Agent("Carol", U_Carol, 102) for i in range(4)]
+        # create 4 cubicles with different prices
+        cubicles = [Cubicle("C1", prices = [10, 20, 30, 40]), Cubicle("C2", prices = [15, 25, 35, 45]), Cubicle("C3",  prices = [20, 30, 40, 50]), Cubicle("C4",  prices = [25, 35, 45, 55])]
+        # create a SmallMarket instance with the agents and cubicles
+        self.market = SmallMarket(agents, cubicles)
+
+    def test_assign_cubicles(self): 
+        # test that the assign_cubicles method assigns agents to cubicles
+        # call the assign_cubicles method
+        self.market.assign_cubicles()
+        # check that each cubicle has 3 agents assigned to it
+        expected = [3, 3, 3, 3]
+        actual = [len(cubicle.assigned_agents) for cubicle in self.market.cubicles]
+        self.assertEqual(actual, expected)
+        # check that each agent in the same cubicle has a different name
+        for cubicle in self.market.cubicles:
+            names = [agent.name for agent in cubicle.assigned_agents]
+            # check that the number of names is equal to the number of unique names
+            self.assertEqual(len(names), len(set(names)))
+
+        
+
 if __name__ == "__main__":
     unittest.main()
 
