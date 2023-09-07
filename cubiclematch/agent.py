@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 class Agent:
-    def __init__(self, name, U, budget):
+    def __init__(self, name, U, budget, year = None):
         self.name = name
         U = np.array(U) 
         # check that U is a 2D square triangular numpy array
@@ -17,6 +17,7 @@ class Agent:
         self._current_assignment = None
         self._cubicle = None
         self.excess_budget = 0
+        self.year = year
 
     @property
     def cubicle(self):
