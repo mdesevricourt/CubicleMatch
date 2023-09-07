@@ -2,6 +2,8 @@
 import numpy as np
 import pandas as pd
 import os
+import time
+import datetime
 
 import cubicle
 import agent
@@ -73,8 +75,43 @@ def agent_builder(filename, verbose = False):
     
 cubicles = cubicle_builder(6, 10)
 agents = agent_builder("Cubicles_results.csv", verbose = True)
-market = market.Market(agents, cubicles, maxing_price = True)
-market.find_ACE(N = 2)
-market.pricing_out()
-market.filling_empty_slots()
-market.export_allocation("allocation.csv")
+market = Market(agents, cubicles, maxing_price = True)
+#market.find_ACE(N = 2, verbose = True)
+backup = False
+long_run = False
+alternative_algorithm = True
+# time allowed is until tomorrow 8am
+current_time = datetime.datetime.now()
+tomorrow = current_time + datetime.timedelta(days=1)
+new_time = datetime.datetime(year=tomorrow.year, month=tomorrow.month, day=tomorrow.day, hour=8, minute=0, second=0)
+# Subtract the current time from the new time to get the difference in seconds
+time_allowed = new_time - current_time
+print(f"Time allowed is {time_allowed} seconds")
+
+
+if alternative_algorithm:
+    # create a small market
+
+    small_market = SmallMarket(agents, cubicles, maxing_price = False)
+    # assign agents to cubicles
+    small_market.assign_cubicles(byyear = True, verbose = True)
+    # assign agents to half-days
+
+    small_market.assign_halfdays(N = 1000)
+    # export allocation
+    small_market.export_allocation("allocation_small_market")
+
+if backup:
+    market.guess_prices()
+    market.pricing_out(verbose=True)
+    market.export_allocation("allocation_pricing_out")
+    market.filling_empty_slots(verbose=True)
+    market.export_allocation("allocation_backup")
+if long_run:
+    market.find_ACE(N = 1000, verbose = True, time_allowed=time_allowed)
+    market.export_allocation("allocation_ACE")
+    market.pricing_out(verbose=True)
+    market.export_allocation("allocation_pricing_out")
+    market.filling_empty_slots(verbose=True)
+    market.export_allocation("allocation_backup")
+
