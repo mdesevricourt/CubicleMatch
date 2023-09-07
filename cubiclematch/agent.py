@@ -108,8 +108,9 @@ class Agent:
         # find the extra half-day that maximizes the utility of the agent
         max_utility = max(utility)
         best_extra_halfday = [i for i in range(len(utility)) if utility[i] == max_utility][0]
+        extra_utility = max_utility - self.utility(self.current_assignment)
 
-        return best_extra_halfday
+        return best_extra_halfday, extra_utility
 
         
 
