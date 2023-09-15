@@ -36,4 +36,9 @@ class Allocation:
         pass
 
 
+class AllocationfromCVSfile(Allocation):
+    def __init__(self, filename):
+        super().__init__()
+        
+
     
