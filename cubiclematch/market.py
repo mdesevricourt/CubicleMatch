@@ -275,14 +275,15 @@ class Market:
             # with probability 0.5, initialize the prices of the half-days per cubicle to max budget * random number between 0 and 1
             if i == 1: # for first iteration, check current guess
                 p = self.prices_vec 
-                p_type = "initial guess"           
-            elif np.random.rand() < 0.5:
+                p_type = "initial guess"  
+
+            elif np.random.rand() < 0.5 :
                 p = self.max_budget * np.random.rand(len(self.prices_vec))
                 p_type = "random"
             else:
                 # error drawn from uniform distribution between -1 and 1
+                beta =  number_selected_uniform_price // 19 + 1
                 number_selected_uniform_price += 1
-                beta =  number_selected_uniform_price // 100 + 1
                 p = total_budget / (self.numberofhalfdays * self.numberofcubicles) + beta*np.random.uniform(-1, 1, len(self.prices_vec))
                 p_type = f"uniform with beta = {beta}"
             # p = total budget / (number of half-days * number of cubicles) + random error
