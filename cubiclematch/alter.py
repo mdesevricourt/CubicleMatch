@@ -1,13 +1,13 @@
 """ Alternative version of the algorithm where agents are first assigned to a cubicle and then the algorithm is run again to assign the agents to half-days."""
 
 
+import os
+
 import numpy as np
 import pandas as pd
-
-from cubicle import Cubicle
 from agent import Agent
+from cubicle import Cubicle
 from market import Market
-import os
 
 # set random seed
 

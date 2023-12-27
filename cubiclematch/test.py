@@ -1,11 +1,10 @@
 import unittest
 
-from market import Market
-from cubicle import Cubicle
+import numpy as np
 from agent import Agent
 from alter import SmallMarket
-
-import numpy as np
+from cubicle import Cubicle
+from market import Market
 
 
 class TestAgent(unittest.TestCase):
@@ -98,7 +97,6 @@ class TestAgent(unittest.TestCase):
 
 
 class TestMarket(unittest.TestCase):
-
     # create a setUp method to initialize a Market instance with some sample data
     def setUp(self):
         # create some sample agents
@@ -173,7 +171,6 @@ class TestMarket(unittest.TestCase):
         self.assertEqual(actual_cubicle, expected_cubicle)
 
     def test_aggregate_demand(self):
-
         expected_aggregate_demand = np.array([1, 1, 1, 1, 0, 0, 0, 0])
         actual_aggregate_demand = self.market.aggregate_demand()
         self.assertEqual(actual_aggregate_demand, expected_aggregate_demand.tolist())
@@ -234,7 +231,6 @@ class TestMarket(unittest.TestCase):
 
 class TestSmallMarket(unittest.TestCase):
     def setUp(self):
-
         # create some 3 types of agents
         U_Alice = np.zeros((4, 4))
         np.fill_diagonal(U_Alice, [1, 0, 1, 0])

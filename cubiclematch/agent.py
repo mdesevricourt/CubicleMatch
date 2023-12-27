@@ -52,7 +52,8 @@ class Agent:
             priced_bundles (list): A list of tupbles of the form (bundle, cubicle, price) where bundle is a numpy array of 0s and 1s and price is a float.
 
         Returns:
-            tuple: A tuple of the form (bundle, cubicle, price) where bundle is a numpy array of 0s and 1s and price is a float that maximizes the utility of the person."""
+            tuple: A tuple of the form (bundle, cubicle, price) where bundle is a numpy array of 0s and 1s and price is a float that maximizes the utility of the person.
+        """
 
         # remove all bundles that are too expensive
         feasible_bundles = [
