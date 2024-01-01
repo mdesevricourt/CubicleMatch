@@ -1,5 +1,6 @@
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 Bundle = (
     jax.Array
@@ -98,10 +99,97 @@ def find_best_bundle(bundles: jax.Array, U: jax.Array, u_cubicle: jax.Array):
 
     Returns:
         jax.Array: The best bundle.
+        best_bundle_index: The index of the best bundle.
     """
 
     # compute the total utility of each bundle
     utilities = total_utility_bundles(bundles, U, u_cubicle)
+
+    # find the index of the best bundle
+    best_bundle_index = jnp.argmax(utilities)
+
+    # return the best bundle
+    return bundles[best_bundle_index], best_bundle_index
+
+
+def create_U_tilde(U_jax: jax.Array, u_cubicle_jax: jax.Array) -> jax.Array:
+    """Return the utility matrix of the cubicle match problem.
+
+    Args:
+        U (jax.Array): A utility matrix, that is a 2D square triangular numpy array of shape (number_of_half_days, number_of_half_days).
+        u_cubicle (jax.Array): A floating point number representing the utility associated with a cubicle.
+
+    Returns:
+        jax.Array: The utility matrix of the cubicle match problem.
+    """
+    # repeat U along the diagonal the same number of times as the number of cubicles
+    U_tilde = np.zeros(
+        (
+            U_jax.shape[0] * u_cubicle_jax.shape[0],
+            U_jax.shape[1] * u_cubicle_jax.shape[0],
+        )
+    )
+    U = np.array(U_jax)
+    u_cubicle = np.array(u_cubicle_jax)
+
+    for i in range(u_cubicle.shape[0]):
+        matrix = np.array(U)
+        diagonal = np.where(matrix.diagonal() == 0, 0, matrix.diagonal() + u_cubicle[i])
+        np.fill_diagonal(matrix, diagonal)
+
+        U_tilde[
+            i * U.shape[0] : (i + 1) * U.shape[0], i * U.shape[0] : (i + 1) * U.shape[0]
+        ] = matrix
+
+    n_half_days = U.shape[0]
+    shape_U_tilde = U_tilde.shape
+
+    for i in range(shape_U_tilde[0]):
+        for j in range(i + 1, shape_U_tilde[1]):
+            i_orig = i % n_half_days
+            j_orig = j % n_half_days
+            if j_orig == i_orig:
+                continue
+
+            U_tilde[i, j] = U[i_orig, j_orig] + U[j_orig, i_orig]
+
+    U_tilde2 = jnp.array(U_tilde)
+    return U_tilde2
+
+
+def utility_tilde(bundle: jax.Array, U_tilde: jax.Array):
+    """Return the utility of a person from a bundle in the cubicle match problem.
+
+    Args:
+        bundle (jax.Array): A bundle, that is a vector of 0s and 1s of length number_of_half_days * number_of_cubicles.
+        U_tilde (jax.Array): The utility matrix of the cubicle match problem.
+
+    Returns:
+        jax.Array: A utility vector of shape (1,).
+    """
+
+    # compute the utility
+    utility = jnp.matmul(jnp.matmul(bundle.T, U_tilde), bundle)
+
+    return jnp.squeeze(utility)
+
+
+utility_bundles = jax.vmap(utility_tilde, in_axes=(0, None))
+
+
+def find_best_bundle_tilde(bundles: jax.Array, U_tilde: jax.Array):
+    """Return the best bundle from a list of bundles in the cubicle match problem.
+
+    Args:
+        bundles (jax.Array): A list of bundles.
+        U_tilde (jax.Array): The utility matrix of the cubicle match problem.
+
+    Returns:
+        jax.Array: The best bundle.
+    """
+
+    # compute the total utility of each bundle
+    utilities = utility_bundles(bundles, U_tilde)
 
     # find the index of the best bundle
     best_bundle_index = jnp.argmax(utilities)
