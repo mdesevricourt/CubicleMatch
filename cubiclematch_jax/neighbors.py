@@ -1,12 +1,12 @@
-from ast import Call
-from turtle import clear
 from typing import Callable
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 
-from cubiclematch_jax.demand import clearing_error_primitives
+from cubiclematch_jax.demand import find_agent_demand
+
+Market_Function = Callable[[jax.Array], dict[str, jax.Array]]
 
 
 def find_gradient_neighbor(
@@ -36,47 +36,51 @@ def find_IA_neighbor(
     price_vector: jax.Array,
     excess_demand: jax.Array,
     excess_budgets: jax.Array,
-    clearing_error: Callable[[jax.Array], jax.Array],
+    aggregate_quantities_price: Market_Function,
 ):
-    """Find individual adjustment neighbors neighbor based on the excess demand and a step size.
+    """Find individual adjustment neighbors neighbor based on the excess demand. For cubicle-half-day that are over-supplied,
+    we set the price to 0. For cubicle-half-day that are over-demanded, we increase the price until at least one more agent
+    demands the item.
 
     Args:
         price_vector (jax.Array): The price vector.
         step_size (jax.Array): The step size.
         z (jax.Array): The modified excess demand.
         excess_budgets (jax.Array): The excess budgets.
-
+        aggregate_quantities_price (Market_Function): Function that computes the aggregate quantities from prices
     Returns:
-        jax.Array: array of individual adjustment neighbors.
+        neighbors (jax.Array): The neighbors.
+        neigbor_types (list[str]): The type of each neighbor.
+
     """
-    # find indexes of elements of z that are not 0
-    indexes = [i for i in range(len(excess_demand)) if excess_demand[i] != 0]
-    neighbors = []
+
+    neighbors_ls = []
     neigbor_types = []
 
     # individual adjustment neighbor
-    for i in indexes:
-        # create a copy of p
-        p_neighbor = np.array(price_vector.copy())
-        d_i = excess_demand[i]
-        if d_i > 0:
-            # if there is excess demand for i, increase p[i] until at least one fewer agent demands the item
+    for (
+        i,
+        d_i,
+    ) in enumerate(excess_demand):
+        if d_i == 0:
+            continue
 
-            current_excess_budgets = excess_budgets.copy()
-            while d_i >= 0:
-                neigbor_types.append(
-                    "individual adjustment neighbor with excess demand"
-                )
-                p_neighbor[i] += min(current_excess_budgets) + 0.01
-                alpha_neighbor, z_neighbor, d_neighbor = clearing_error(p_neighbor)
-                d_i = d_neighbor[i]
-        elif d_i < 0:
+        p_neighbor = price_vector
+        if d_i < 0:
             # if there is excess supply for i, decrease p[i] until at least one more agent demands the item
-            neigbor_types.append("individual adjustment neighbor with excess supply")
-            p_neighbor[i] = 0
-            # update price
-            self.prices_vec = p_neighbor
-            alpha_neighbor, z_neighbor, d_neighbor = self.clearing_error()
-            d_i = d_neighbor[i]
+            neigbor_types.append("IA neighbor (excess supply)")
+            p_neighbor = price_vector.at[i].set(0)
 
-    return (neighbors,)
+        current_excess_budgets = excess_budgets.copy()
+        while d_i > 0:
+            neigbor_types.append("IA neighbor (excess demand)")
+            p_neighbor = price_vector.at[i].add(min(current_excess_budgets) + 1)
+            res = aggregate_quantities_price(p_neighbor)
+            agents_demanding_i = find_agent_demand(i, res["demand"])
+            current_excess_budgets = res["excess_budgets"][agents_demanding_i]
+            d_i = res["excess_demand_vec"][i]
+
+        neighbors_ls.append(p_neighbor)
+    neighbors = jnp.array(neighbors_ls)
+
+    return neighbors, neigbor_types
