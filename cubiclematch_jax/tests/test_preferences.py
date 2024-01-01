@@ -3,6 +3,7 @@ import jax.numpy as jnp
 
 from cubiclematch_jax.preferences import (
     collapse_bundle,
+    create_U_tilde,
     find_best_bundle,
     total_utility_bundle,
     total_utility_bundles,
@@ -125,9 +126,136 @@ def test_find_best_bundle():
     )
     u_cubicle = jnp.array([10, 5])
     bundles = jnp.array([bundle1, bundle2, bundle3])
-    best_bundle = find_best_bundle(bundles, U, u_cubicle)
+    best_bundle, _ = find_best_bundle(bundles, U, u_cubicle)
     expected_best_bundle = jnp.array([bundle3])
     assert jnp.allclose(best_bundle, expected_best_bundle)
+
+
+def test_U_tilde():
+    U = jnp.array(
+        [
+            [10, 5, 0],
+            [0, 10, 3],
+            [0, 0, 5],
+        ]
+    )
+    u_cubicle = jnp.array([10, 5])
+    expected_U_tilde = jnp.array(
+        [
+            [
+                20,
+                5,
+                0,
+                0,
+                5,
+                0,
+            ],
+            [
+                0,
+                20,
+                3,
+                5,
+                0,
+                3,
+            ],
+            [
+                0,
+                0,
+                15,
+                0,
+                3,
+                0,
+            ],
+            [
+                0,
+                0,
+                0,
+                15,
+                5,
+                0,
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                15,
+                3,
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                10,
+            ],
+        ]
+    )
+    assert jnp.allclose(create_U_tilde(U, u_cubicle), expected_U_tilde)
+
+    U = jnp.array(
+        [
+            [10, 5, 0],
+            [0, 10, 0],
+            [0, 0, 0],
+        ]
+    )
+    u_cubicle = jnp.array([10, 5])
+
+    expected_U_tilde = jnp.array(
+        [
+            [
+                20,
+                5,
+                0,
+                0,
+                5,
+                0,
+            ],
+            [
+                0,
+                20,
+                0,
+                5,
+                0,
+                0,
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ],
+            [
+                0,
+                0,
+                0,
+                15,
+                5,
+                0,
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                15,
+                0,
+            ],
+            [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+            ],
+        ]
+    )
+    assert jnp.allclose(create_U_tilde(U, u_cubicle), expected_U_tilde)
 
 
 if __name__ == "__main__":
@@ -137,3 +265,4 @@ if __name__ == "__main__":
     test_total_utility_cubicle()
     test_total_utility_cubicles()
     test_find_best_bundle()
+    test_U_tilde()
