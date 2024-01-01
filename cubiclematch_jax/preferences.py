@@ -185,7 +185,8 @@ def find_best_bundle_tilde(bundles: jax.Array, U_tilde: jax.Array):
         U_tilde (jax.Array): The utility matrix of the cubicle match problem.
 
     Returns:
-        jax.Array: The best bundle.
+        best_bundle(jax.Array): The best bundle.
+        best_bundle_index: The index of the best bundle.
     """
 
     # compute the total utility of each bundle
@@ -195,4 +196,4 @@ def find_best_bundle_tilde(bundles: jax.Array, U_tilde: jax.Array):
     best_bundle_index = jnp.argmax(utilities)
 
     # return the best bundle
-    return bundles[best_bundle_index]
+    return bundles[best_bundle_index], best_bundle_index
