@@ -8,7 +8,7 @@ from cubiclematch_jax.demand import (
     find_agent_demand,
     individual_demand,
 )
-from cubiclematch_jax.market_level import aggregate_quantities
+from cubiclematch_jax.market_level import compute_aggregate_quantities
 from cubiclematch_jax.preferences import create_U_tilde
 from cubiclematch_jax.price import price_bundles
 
@@ -127,8 +127,8 @@ def test_aggregate_demand(verbose=False):
 
     expected1 = bundle1
     expected2 = bundle2
-    res = aggregate_quantities(
-        prices=prices,
+    res = compute_aggregate_quantities(
+        price_vector=prices,
         budgets=budgets,
         U_tilde=U_tilde,
         bundles=bundles,
