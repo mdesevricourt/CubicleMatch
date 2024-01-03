@@ -46,3 +46,4 @@ def test_find_neighbor_with_smallest_error():
 if __name__ == "__main__":
     test_generate_random_price_vector()
     test_filter_out_tabu_neighbors()
+    test_find_neighbor_with_smallest_error()
