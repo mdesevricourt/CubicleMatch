@@ -26,13 +26,13 @@ def find_gradient_neighbor(
 
     neighbor = jnp.where(neighbor >= 0, neighbor, 0)
 
-    return neighbor
+    return neighbor, "gradient neighbor"
 
 
 find_gradient_neighbors = jax.vmap(find_gradient_neighbor, in_axes=(None, 0, None))
 
 
-def find_IA_neighbor(
+def find_IA_neighbors(
     price_vector: jax.Array,
     excess_demand: jax.Array,
     excess_budgets: jax.Array,
