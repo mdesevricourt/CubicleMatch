@@ -1,11 +1,12 @@
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.find_ACE import (
+from cubiclematch_jax.aux_func import (
     filter_out_tabu_neighbors,
     find_neighbor_with_smallest_error,
     generate_random_price_vector,
 )
+from cubiclematch_jax.demand import compute_aggregate_demand
 
 
 def test_generate_random_price_vector():
@@ -28,7 +29,9 @@ def test_filter_out_tabu_neighbors():
     """Test the filter_out_tabu_neighbors function"""
     neighbors = jnp.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [8, 9, 10]])
     tabu_list = jnp.array([[1, 2, 3], [7, 8, 9]])
-    non_tabu_neighbors = filter_out_tabu_neighbors(neighbors, tabu_list)
+    agg_dict = {"excess_demand_vec": neighbors}
+
+    non_tabu_neighbors = filter_out_tabu_neighbors(neighbors, agg_dict, tabu_list)
 
     assert jnp.allclose(non_tabu_neighbors, jnp.array([[4, 5, 6], [8, 9, 10]]))
 
