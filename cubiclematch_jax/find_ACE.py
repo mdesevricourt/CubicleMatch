@@ -1,49 +1,98 @@
 """This module implements the ACE algorithm for finding the best matching of agents to cubicles."""
 
+import time
+from typing import Callable
+
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.aux_func import ACE_iteration
+
+def ACE_iteration_extended(
+    key,
+    evaluate_price_vec: Callable,
+    gen_rand_price_vec: Callable,
+    find_neighbors: Callable,
+    max_C: int = 5,
+):
+    """Perform one iteration of the ACE algorithm.
+
+    Args:
+        key (jax.random.PRNGKey): The key.
+        evaluate_price_vec (Callable): The function for evaluating the price vector.
+        gen_rand_price_vec (Callable): The function for generating a random price vector.
+        find_neighbors (Callable): The function for finding the neighbors.
+        max_C (int, optional): The maximum number of iterations. Defaults to 5.
+
+    Returns:
+        price_vector (jax.Array): The final price vector.
+        clearing_error (jax.Array): The final clearing error
+        number_excess_demand (jax.Array): The number of excess demand.
+        key (jax.random.PRNGKey): The new key.
+
+    """
+    c = 0
+    tabu_list = jnp.array([])
+    current_p, key = gen_rand_price_vec(key)
+
+    agg_quantities = evaluate_price_vec(current_p)
+
+    best_p = current_p
+    search_error = agg_quantities["clearing_error"]
+    search_number_excess_demand = agg_quantities["number_excess_demand"]
+
+    while c < max_C and search_error > 0:
+        neighbors = find_neighbors(current_p, agg_quantities, tabu_list)
+        if not neighbors:
+            break
+        res = evaluate_price_vec(neighbors)
+        current_p = res["price_vector"]
+
+        tabu_list = jnp.vstack((tabu_list, current_p))
+
+        better_p_found = res["clearing_error"] < search_error or (
+            res["clearing_error"] <= search_error
+            and res["number_excess_demand"] < search_number_excess_demand
+        )
+
+        if better_p_found:
+            best_p = current_p
+            search_error = res["clearing_error"]
+            search_number_excess_demand = res["number_excess_demand"]
+            c = 0
+
+    return best_p, search_error, search_number_excess_demand, key
 
 
 def ACE_algorithm(
-    price_vector: jax.Array,
-    bundles: jax.Array,
-    budgets: jax.Array,
-    U_tilde: jax.Array,
-    supply: jax.Array,
-    step_sizes: jax.Array,
-    tabu_list: jax.Array,
-    max_iter: int,
-    tol: float,
+    key,
+    ACE_iteration: Callable,
+    max_hours: float,
 ):
     """Find the best matching of agents to cubicles.
 
     Args:
-        price_vector (jax.Array): The initial price vector.
-        bundles (jax.Array): The bundles.
-        budgets (jax.Array): The budgets.
-        U_tilde (jax.Array): The utility function.
-        supply (jax.Array): The supply.
-        step_sizes (jax.Array): The step sizes for the gradient neighbors.
-        tabu_list (jax.Array): The tabu list.
-        max_iter (int): The maximum number of iterations.
-        tol (float): The tolerance level for the clearing error.
-
-    Returns:
-        price_vector (jax.Array): The final price vector.
-        clearing_error (jax.Array): The final clearing error.
+        key (jax.random.PRNGKey): The initial random key.
+        ACE_iteration (Callable): The ACE iteration function. It takes in a key and returns a price vector, clearing error, number of excess demand, and a new key.
+        max_hours (float): The maximum number of hours.
+        tol (float): The tolerance.
 
     """
-    # initialize
-    clearing_error = tol + 1
-    iter = 0
+    start_time = time.time()
+    current_time = start_time
 
-    # iterate
-    while clearing_error > tol and iter < max_iter:
-        price_vector, clearing_error = ACE_iteration(
-            price_vector, bundles, budgets, U_tilde, supply, step_sizes, tabu_list
-        )
-        iter += 1
+    best_error = jnp.inf
+    best_number_excess_demand = jnp.inf
+    best_p = jnp.array([])
 
-    return price_vector, clearing_error
+    while current_time - start_time < max_hours * 3600 and best_error > 0:
+        p, error, number_excess_demand, key = ACE_iteration(key)
+        if error < best_error or (
+            error <= best_error and number_excess_demand < best_number_excess_demand
+        ):
+            best_error = error
+            best_number_excess_demand = number_excess_demand
+            best_p = p
+
+        current_time = time.time()
+
+    return best_p, best_error, best_number_excess_demand
