@@ -6,7 +6,6 @@ from cubiclematch_jax.aux_func import (
     find_neighbor_with_smallest_error,
     generate_random_price_vector,
 )
-from cubiclematch_jax.demand import compute_aggregate_demand
 
 
 def test_generate_random_price_vector():
