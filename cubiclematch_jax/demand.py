@@ -1,8 +1,8 @@
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.preferences import find_best_bundle_tilde
 from cubiclematch_jax.price import affordable_bundles
+from cubiclematch_jax.utility import find_best_bundle_tilde
 
 
 def individual_demand(
@@ -39,64 +39,6 @@ def individual_demand(
 demand_vector = jax.vmap(individual_demand, in_axes=(0, 0, None, None))
 
 # %
-
-
-def compute_aggregate_demand(demand_vector: jax.Array) -> jax.Array:
-    """Return the aggregate demand, aka the bundle that maximizes utility subject to budget constraint.
-
-    Args:
-        demand_vector (jax.Array): A vector of demands.
-    Returns:
-        aggregate_demand (jax.Array): The aggregate demand.
-    """
-    # compute the aggregate demand
-    aggregate_demand = jnp.sum(demand_vector, axis=0)
-    return aggregate_demand
-
-
-def compute_excess_demand(
-    aggregate_demand: jax.Array,
-    supply: jax.Array,
-) -> jax.Array:
-    """Return the excess demand, aka the aggregate demand minus the total supply.
-
-    Args:
-        aggregate_demand (jax.Array): The aggregate demand.
-        supply (jax.Array): The total supply.
-    Returns:
-        excess_demand (jax.Array): The excess demand.
-    """
-    excess_demand = aggregate_demand - supply
-    return excess_demand
-
-
-def modified_excess_demand(
-    excess_demand: jax.Array, price_vector: jax.Array
-) -> jax.Array:
-    """Return the modified excess demand, aka the excess demand modified so that it is non-negative.
-
-    Args:
-        excess_demand (jax.Array): The excess demand.
-        price_vector (jax.Array): The price vector.
-    Returns:
-        z (jax.Array): The excess demand modified so that it is non-negative.
-    """
-    z = jnp.where(price_vector != 0, excess_demand, jnp.max(excess_demand, 0))
-    return z
-
-
-def compute_clearing_error(
-    z: jax.Array,
-):
-    """Return the clearing error, aka the sum of the excess demand squared.
-
-    Args:
-       z (jax.Array): The modified excess demand.
-    Returns:
-        alpha (jax.Array): The clearing error.
-    """
-
-    return jnp.sum(z**2)
 
 
 def find_agent_demand(index: int, demanded_bundles: jax.Array) -> jax.Array:
