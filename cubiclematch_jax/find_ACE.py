@@ -9,7 +9,7 @@ import jax.numpy as jnp
 
 def ACE_iteration_extended(
     key,
-    evaluate_price_vec: Callable,
+    evaluate_prices: Callable,
     gen_rand_price_vec: Callable,
     find_neighbors: Callable,
     max_C: int = 5,
@@ -30,11 +30,12 @@ def ACE_iteration_extended(
         key (jax.random.PRNGKey): The new key.
 
     """
+    evaluate_price_vecs = jax.vmap(evaluate_prices, in_axes=0)
     c = 0
     tabu_list = jnp.array([])
     current_p, key = gen_rand_price_vec(key)
 
-    agg_quantities = evaluate_price_vec(current_p)
+    agg_quantities = evaluate_prices(current_p)
 
     best_p = current_p
     search_error = agg_quantities["clearing_error"]
@@ -44,7 +45,7 @@ def ACE_iteration_extended(
         neighbors = find_neighbors(current_p, agg_quantities, tabu_list)
         if not neighbors:
             break
-        res = evaluate_price_vec(neighbors)
+        res = evaluate_price_vecs(neighbors)
         current_p = res["price_vector"]
 
         tabu_list = jnp.vstack((tabu_list, current_p))

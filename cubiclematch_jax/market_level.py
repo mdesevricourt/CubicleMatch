@@ -6,8 +6,6 @@ from typing import Callable
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.price import price_bundles
-
 
 def compute_aggregate_demand(demand_vector: jax.Array) -> jax.Array:
     """Return the aggregate demand, aka the bundle that maximizes utility subject to budget constraint.
@@ -69,7 +67,6 @@ def compute_clearing_error(
 
 def compute_agg_quantities(
     price_vector: jax.Array,
-    bundles: jax.Array,
     compute_demand_vector: Callable,
     supply: jax.Array,
 ):
@@ -85,8 +82,7 @@ def compute_agg_quantities(
     res (dict): A dictionary containing the aggregate quantities.
     """
 
-    bundle_prices = price_bundles(bundles, price_vector)
-    demand, excess_budgets = compute_demand_vector(bundles, bundle_prices)
+    demand, excess_budgets = compute_demand_vector(price_vector)
     agg_demand = compute_aggregate_demand(demand)
     excess_demand_vec = compute_excess_demand(agg_demand, supply)
     z = modified_excess_demand(excess_demand_vec, price_vector)
@@ -99,8 +95,8 @@ def compute_agg_quantities(
         "agg_demand": agg_demand,
         "excess_demand_vec": excess_demand_vec,
         "z": z,
-        "alpha": alpha,
-        "number_excess_demands": number_excess_demands,
+        "clearing_error": alpha,
+        "number_excess_demand": number_excess_demands,
     }
 
     return res

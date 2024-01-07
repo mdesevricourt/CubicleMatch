@@ -37,7 +37,7 @@ def find_IA_neighbors(
     price_vector: jax.Array,
     excess_demand: jax.Array,
     excess_budgets: jax.Array,
-    compute_agg_quantities: Market_Function,
+    compute_agg_quantities: Callable[[jax.Array], dict[str, jax.Array]],
 ):
     """Find individual adjustment neighbors neighbor based on the excess demand. For cubicle-half-day that are over-supplied,
     we set the price to 0. For cubicle-half-day that are over-demanded, we increase the price until at least one more agent
