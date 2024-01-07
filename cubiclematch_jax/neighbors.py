@@ -4,6 +4,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
+from cubiclematch_jax.aux_func import filter_out_tabu_neighbors
 from cubiclematch_jax.demand import find_agent_demand
 
 Market_Function = Callable[[jax.Array], dict[str, jax.Array]]
@@ -26,7 +27,7 @@ def find_gradient_neighbor(
 
     neighbor = jnp.where(neighbor >= 0, neighbor, 0)
 
-    return neighbor, "gradient neighbor"
+    return neighbor
 
 
 find_gradient_neighbors = jax.vmap(find_gradient_neighbor, in_axes=(None, 0, None))
@@ -36,7 +37,7 @@ def find_IA_neighbors(
     price_vector: jax.Array,
     excess_demand: jax.Array,
     excess_budgets: jax.Array,
-    aggregate_quantities_price: Market_Function,
+    compute_agg_quantities: Market_Function,
 ):
     """Find individual adjustment neighbors neighbor based on the excess demand. For cubicle-half-day that are over-supplied,
     we set the price to 0. For cubicle-half-day that are over-demanded, we increase the price until at least one more agent
@@ -50,7 +51,6 @@ def find_IA_neighbors(
         aggregate_quantities_price (Market_Function): Function that computes the aggregate quantities from prices
     Returns:
         neighbors (jax.Array): The neighbors.
-        neigbor_types (list[str]): The type of each neighbor.
 
     """
 
@@ -75,7 +75,7 @@ def find_IA_neighbors(
         while d_i > 0:
             neigbor_types.append("IA neighbor (excess demand)")
             p_neighbor = price_vector.at[i].add(min(current_excess_budgets) + 1)
-            res = aggregate_quantities_price(p_neighbor)
+            res = compute_agg_quantities(p_neighbor)
             agents_demanding_i = find_agent_demand(i, res["demand"])
             current_excess_budgets = res["excess_budgets"][agents_demanding_i]
             d_i = res["excess_demand_vec"][i]
@@ -83,4 +83,40 @@ def find_IA_neighbors(
         neighbors_ls.append(p_neighbor)
     neighbors = jnp.array(neighbors_ls)
 
-    return neighbors, neigbor_types
+    return neighbors
+
+
+def find_all_neighbors(
+    price_vector: jax.Array,
+    excess_demand: jax.Array,
+    excess_budgets: jax.Array,
+    step_sizes: jax.Array,
+    compute_agg_quantities: Market_Function,
+    tabu_list: jax.Array,
+):
+    """Find all neighbors.
+
+    Args:
+        price_vector (jax.Array): The price vector.
+        step_size (jax.Array): The step size.
+        excess_demand (jax.Array): The excess demand.
+        excess_budgets (jax.Array): The excess budgets.
+        aggregate_quantities_price (Market_Function): Function that computes the aggregate quantities from prices
+        tabu_list (jax.Array): The tabu list.
+
+    Returns:
+        neighbors (jax.Array): The neighbors.
+    """
+    gradient_neighbors = find_gradient_neighbors(
+        price_vector, step_sizes, excess_demand
+    )
+    IA_neighbors = find_IA_neighbors(
+        price_vector, excess_demand, excess_budgets, compute_agg_quantities
+    )
+
+    neighbors = jnp.vstack((gradient_neighbors, IA_neighbors))
+    # neigbor_types = ["gradient"] * len(gradient_neighbors) + ["IA"] * len(IA_neighbors)
+    agg_quantites = compute_agg_quantities(neighbors)
+    neighbors = filter_out_tabu_neighbors(neighbors, agg_quantites, tabu_list)
+
+    return neighbors
