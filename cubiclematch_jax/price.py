@@ -22,7 +22,7 @@ price_bundles = jax.vmap(price_bundle, in_axes=(0, None))
 
 
 def affordable_bundles(
-    bundles: jax.Array, bundle_prices: jax.Array, budget: jax.Array = jnp.array(0)
+    bundles: jax.Array, bundle_prices: jax.Array, budget: jax.Array
 ) -> jax.Array:
     """Return the affordable bundles from a list of bundles.
 
@@ -36,6 +36,8 @@ def affordable_bundles(
     """
     # find the affordable bundles
     y = bundles * 0
-    affordable_bundles = jnp.where(bundle_prices <= budget, bundles.T, y.T).T
+    is_affordable = bundle_prices <= budget
+    is_affordable = jnp.expand_dims(is_affordable, axis=1)
+    affordable_bundles = jnp.where(is_affordable, bundles, y)
 
     return affordable_bundles
