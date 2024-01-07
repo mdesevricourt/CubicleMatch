@@ -28,6 +28,7 @@ def test_affordable_bundles(verbose=False):
     bundle0 = jnp.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     expected = jnp.array([bundle1, bundle2, bundle0])
     if verbose:
+        print(bundle_prices)
         print(affordable_bundles(bundles, bundle_prices, budget))
 
     assert jnp.allclose(affordable_bundles(bundles, bundle_prices, budget), expected)
