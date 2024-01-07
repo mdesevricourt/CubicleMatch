@@ -1,14 +1,11 @@
-from typing import Any
+from typing import Any, Callable
 
 import jax
 import jax.numpy as jnp
-import numpy as np
-
-from cubiclematch_jax.market_level import compute_aggregate_quantities_vec
 
 
 def generate_random_price_vector(
-    length: int, total_budget: int, key: Any
+    length: int, total_budget: float, key: Any
 ) -> tuple[jax.Array, Any]:
     """Generate a random price vector.
 
@@ -87,16 +84,16 @@ def find_neighbor_with_smallest_error(neighbors: jax.Array, clearing_errors: jax
     return neighbors[index, :], clearing_errors[index]
 
 
-def total_budget(budgets: jax.Array) -> jax.Array:
+def compute_total_budget(budgets: jax.Array) -> float:
     """Return the total budget.
 
     Args:
         budgets (jax.Array): The budgets.
 
     Returns:
-        jax.Array: The total budget.
+        float: The total budget.
     """
-    return jnp.sum(budgets)
+    return float(jnp.sum(budgets))
 
 
 def sort_neighbors_by_clearing_error(
@@ -123,35 +120,29 @@ def sort_neighbors_by_clearing_error(
     return neighbors, agg_quantities_dict
 
 
-def ACE_iteration(
+def ACE_evaluate_price_vectors(
     price_vectors: jax.Array,
-    bundles: jax.Array,
-    budgets: jax.Array,
-    U_tilde: jax.Array,
-    supply: jax.Array,
     tabu_list: jax.Array,
+    compute_agg_from_prices: Callable,
 ):
-    """Perform one iteration of the ACE algorithm.
+    """Evaluates the neighbors of the current price vector.
+    Returns the neighbor with the smallest error that is not in the tabu list.
 
     Args:
-        price_vector (jax.Array): The price vector.
-        bundles (jax.Array): The bundles.
-        budgets (jax.Array): The budgets.
-        U_tilde (jax.Array): The utility function.
-        supply (jax.Array): The supply.
-        step_sizes (jax.Array): The step sizes for the gradient neighbors.
+        price_vectors (jax.Array): The neighbors of the current price vector to evaluate.
+        compute_agg_from_prices (Callable): A function that computes the aggregate quantities from the price vectors.
+            It should return a dictionary containing excess demand, clearing error, and number of excess demands.
+
         tabu_list (jax.Array): The tabu list.
 
     Returns:
-        new_price_vector (jax.Array): The new price vector.
-        new_clearing_error (jax.Array): The new clearing error.
-
+        jax.Array: The neighbor with the smallest error that is not in the tabu list.
+        jax.Array: The clearing error of said neighbor.
+        jax.Array: The number of excess demands of said neighbor.
     """
 
     # find neighbors
-    agg_quantities = compute_aggregate_quantities_vec(
-        price_vectors, budgets, U_tilde, bundles, supply
-    )
+    agg_quantities = compute_agg_from_prices(price_vectors)
 
     price_vectors, agg_quantities = filter_out_tabu_neighbors(
         price_vectors, agg_quantities, tabu_list
@@ -165,6 +156,6 @@ def ACE_iteration(
     # return the neighbor with the smallest error
     return (
         price_vectors[0, :],
-        agg_quantities["alpha"][0],
+        agg_quantities["clearing_error"][0],
         agg_quantities["number_excess_demands"][0],
     )
