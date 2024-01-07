@@ -1,29 +1,92 @@
 """Computes market level quantities from prices and primitives."""
 
 
+from typing import Callable
+
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.demand import (
-    compute_aggregate_demand,
-    compute_clearing_error,
-    compute_excess_demand,
-    demand_vector,
-    modified_excess_demand,
-)
 from cubiclematch_jax.price import price_bundles
 
 
-@jax.jit
-def compute_aggregate_quantities(
+def compute_aggregate_demand(demand_vector: jax.Array) -> jax.Array:
+    """Return the aggregate demand, aka the bundle that maximizes utility subject to budget constraint.
+
+    Args:
+        demand_vector (jax.Array): A vector of demands.
+    Returns:
+        aggregate_demand (jax.Array): The aggregate demand.
+    """
+    # compute the aggregate demand
+    aggregate_demand = jnp.sum(demand_vector, axis=0)
+    return aggregate_demand
+
+
+def compute_excess_demand(
+    aggregate_demand: jax.Array,
+    supply: jax.Array,
+) -> jax.Array:
+    """Return the excess demand, aka the aggregate demand minus the total supply.
+
+    Args:
+        aggregate_demand (jax.Array): The aggregate demand.
+        supply (jax.Array): The total supply.
+    Returns:
+        excess_demand (jax.Array): The excess demand.
+    """
+    excess_demand = aggregate_demand - supply
+    return excess_demand
+
+
+def modified_excess_demand(
+    excess_demand: jax.Array, price_vector: jax.Array
+) -> jax.Array:
+    """Return the modified excess demand, aka the excess demand modified so that it is non-negative.
+
+    Args:
+        excess_demand (jax.Array): The excess demand.
+        price_vector (jax.Array): The price vector.
+    Returns:
+        z (jax.Array): The excess demand modified so that it is non-negative.
+    """
+    z = jnp.where(price_vector != 0, excess_demand, jnp.max(excess_demand, 0))
+    return z
+
+
+def compute_clearing_error(
+    z: jax.Array,
+):
+    """Return the clearing error, aka the sum of the excess demand squared.
+
+    Args:
+       z (jax.Array): The modified excess demand.
+    Returns:
+        alpha (jax.Array): The clearing error.
+    """
+
+    return jnp.sum(z**2)
+
+
+def compute_agg_quantities(
     price_vector: jax.Array,
-    budgets: jax.Array,
-    U_tilde: jax.Array,
     bundles: jax.Array,
+    compute_demand_vector: Callable,
     supply: jax.Array,
 ):
+    """Return the aggregate quantities.
+
+    # Parameters
+    price_vector (jax.Array): The price vector.
+    bundles (jax.Array): The available bundles.
+    compute_demand_vector (Callable): A function that computes the demand vector from the available bundles and their respective prices.
+    supply (jax.Array): The total supply.
+
+    # Returns
+    res (dict): A dictionary containing the aggregate quantities.
+    """
+
     bundle_prices = price_bundles(bundles, price_vector)
-    demand, excess_budgets = demand_vector(budgets, U_tilde, bundles, bundle_prices)
+    demand, excess_budgets = compute_demand_vector(bundles, bundle_prices)
     agg_demand = compute_aggregate_demand(demand)
     excess_demand_vec = compute_excess_demand(agg_demand, supply)
     z = modified_excess_demand(excess_demand_vec, price_vector)
@@ -43,6 +106,6 @@ def compute_aggregate_quantities(
     return res
 
 
-compute_aggregate_quantities_vec = jax.vmap(
-    compute_aggregate_quantities, in_axes=(0, None, None, None, None)
+compute_agg_quantities_vec = jax.vmap(
+    compute_agg_quantities, in_axes=(0, None, None, None, None)
 )
