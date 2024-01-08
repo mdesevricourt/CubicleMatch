@@ -6,6 +6,11 @@ from typing import Callable
 import jax
 import jax.numpy as jnp
 
+from cubiclematch_jax.aux_func import (
+    select_best_neighbor,
+    sort_neighbors_by_clearing_error,
+)
+
 
 def ACE_iteration_extended(
     key,
@@ -32,7 +37,7 @@ def ACE_iteration_extended(
     """
     evaluate_price_vecs = jax.vmap(evaluate_prices, in_axes=0)
     c = 0
-    tabu_list = jnp.array([])
+
     current_p, key = gen_rand_price_vec(key)
 
     agg_quantities = evaluate_prices(current_p)
@@ -40,25 +45,35 @@ def ACE_iteration_extended(
     best_p = current_p
     search_error = agg_quantities["clearing_error"]
     search_number_excess_demand = agg_quantities["number_excess_demand"]
+    tabu_list = jnp.array([agg_quantities["excess_demand_vec"]])
 
     while c < max_C and search_error > 0:
+        print(
+            f"c: {c}, search_error: {search_error}, search_number_excess_demand: {search_number_excess_demand}"
+        )
+        c += 1
         neighbors = find_neighbors(current_p, agg_quantities, tabu_list)
-        if not neighbors:
+        if len(neighbors) == 0:
             break
-        res = evaluate_price_vecs(neighbors)
-        current_p = res["price_vector"]
+        agg_quantities = evaluate_price_vecs(neighbors)
+        # sort prices by clearing error and number of excess demand
+        current_p, agg_quantities = select_best_neighbor(neighbors, agg_quantities)
 
-        tabu_list = jnp.vstack((tabu_list, current_p))
+        current_clearing_error = agg_quantities["clearing_error"]
+        current_number_excess_demand = agg_quantities["number_excess_demand"]
+        current_excess_demand_vec = agg_quantities["excess_demand_vec"]
 
-        better_p_found = res["clearing_error"] < search_error or (
-            res["clearing_error"] <= search_error
-            and res["number_excess_demand"] < search_number_excess_demand
+        tabu_list = jnp.vstack((tabu_list, current_excess_demand_vec))
+
+        better_p_found = current_clearing_error < search_error or (
+            current_clearing_error <= search_error
+            and current_number_excess_demand < search_number_excess_demand
         )
 
         if better_p_found:
             best_p = current_p
-            search_error = res["clearing_error"]
-            search_number_excess_demand = res["number_excess_demand"]
+            search_error = current_clearing_error
+            search_number_excess_demand = current_number_excess_demand
             c = 0
 
     return best_p, search_error, search_number_excess_demand, key
@@ -68,6 +83,7 @@ def ACE_algorithm(
     key,
     ACE_iteration: Callable,
     max_hours: float,
+    verbose: bool = False,
 ):
     """Find the best matching of agents to cubicles.
 
@@ -86,6 +102,10 @@ def ACE_algorithm(
     best_p = jnp.array([])
 
     while current_time - start_time < max_hours * 3600 and best_error > 0:
+        if verbose:
+            print(f"best_error: {best_error}")
+            print(f"best_number_excess_demand: {best_number_excess_demand}")
+            print(f"best_p: {best_p}")
         p, error, number_excess_demand, key = ACE_iteration(key)
         if error < best_error or (
             error <= best_error and number_excess_demand < best_number_excess_demand
@@ -96,4 +116,4 @@ def ACE_algorithm(
 
         current_time = time.time()
 
-    return best_p, best_error, best_number_excess_demand
+    return best_p, best_error, best_number_excess_demand, key

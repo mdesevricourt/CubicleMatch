@@ -48,9 +48,13 @@ def main(
     max_budget = float(jnp.max(budgets))
     preference_orderings = jnp.array([agent.preferences for agent in agents])
     length = len(supply)
+    verbose: bool = settings.pop("verbose", False)
+
+    if settings:
+        raise ValueError(f"Unknown settings: {settings}")
 
     def compute_demand_vector(price_vec):
-        bundles_prices = price_bundles(price_vec, bundles)
+        bundles_prices = price_bundles(bundles, price_vec)
         return calculate_demand_vector(
             bundles_prices,
             budgets,
@@ -58,6 +62,7 @@ def main(
             bundles,
         )
 
+    @jax.jit
     def evaluate_prices(price_vec):
         return compute_agg_quantities(
             price_vec,
@@ -69,12 +74,12 @@ def main(
         return generate_random_price_vector(length, max_budget, key)
 
     def find_neighbors(price_vec, agg_dict, tabu_list):
-        find_all_neighbors(
+        return find_all_neighbors(
             price_vector=price_vec,
             excess_demand=agg_dict["excess_demand_vec"],
             excess_budgets=agg_dict["excess_budgets"],
             step_sizes=step_sizes,
-            compute_agg_quantities=evaluate_prices,
+            evaluate_prices=evaluate_prices,
             tabu_list=tabu_list,
         )
 
@@ -87,6 +92,6 @@ def main(
             max_C=int(max_C),
         )
 
-    res = ACE_algorithm(key, ACE_iteration, max_hours=max_hour)
-
-    return res
+    res = ACE_algorithm(key, ACE_iteration, max_hours=max_hour, verbose=verbose)
+    final_agg_quantities = evaluate_prices(res[0])
+    return res, final_agg_quantities

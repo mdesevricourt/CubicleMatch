@@ -62,8 +62,8 @@ def filter_out_tabu_neighbors(
     excess_demands = agg_quantities_dict["excess_demand_vec"]
     in_tabu = are_excess_demands_in_tabu_list(excess_demands, tabu_list)
     non_tabu_neighbors = neighbors[~in_tabu]
-    for k, v in agg_quantities_dict.items():
-        agg_quantities_dict[k] = v[~in_tabu]
+    # for k, v in agg_quantities_dict.items():
+    #     agg_quantities_dict[k] = v[~in_tabu]
 
     return non_tabu_neighbors
 
@@ -96,6 +96,29 @@ def compute_total_budget(budgets: jax.Array) -> float:
     return float(jnp.sum(budgets))
 
 
+def select_best_neighbor(
+    neighbors: jax.Array, agg_quantities_dict: dict[str, jax.Array]
+):
+    """Select the neighbor with the smallest error, and in case of ties, the one with the smallest number of excess demands.
+
+    Args:
+        neighbors (jax.Array): The neighbors.
+        agg_quantities_dict (dict[str, jax.Array]): The dictionary of aggregate quantities for the neighbors.
+
+    Returns:
+        jax.Array: The selected neighbor.
+        dict[str, jax.Array]: The dictionary of aggregate quantities for the selected neighbor.
+    """
+
+    sorted_neighbors, sorted_agg_quantities_dict = sort_neighbors_by_clearing_error(
+        neighbors, agg_quantities_dict
+    )
+
+    return sorted_neighbors[0, :], {
+        k: v[0] for k, v in sorted_agg_quantities_dict.items()
+    }
+
+
 def sort_neighbors_by_clearing_error(
     neighbors: jax.Array, agg_quantities_dict: dict[str, jax.Array]
 ) -> tuple[jax.Array, dict[str, jax.Array]]:
@@ -110,8 +133,8 @@ def sort_neighbors_by_clearing_error(
         agg_quantities_dict (dict[str, jax.Array]): The dictionary of aggregate quantities for the sorted neighbors.
     """
     # sort the neighbors by clearing error
-    clearing_errors = agg_quantities_dict["alpha"]
-    number_excess_demands = agg_quantities_dict["number_excess_demands"]
+    clearing_errors = agg_quantities_dict["clearing_error"]
+    number_excess_demands = agg_quantities_dict["number_excess_demand"]
     indices = jnp.lexsort((number_excess_demands, clearing_errors))
     neighbors = neighbors[indices, :]
     for k, v in agg_quantities_dict.items():

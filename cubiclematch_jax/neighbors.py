@@ -72,9 +72,13 @@ def find_IA_neighbors(
             p_neighbor = price_vector.at[i].set(0)
 
         current_excess_budgets = excess_budgets.copy()
-        while d_i > 0:
+        if d_i > 0:
             neigbor_types.append("IA neighbor (excess demand)")
-            p_neighbor = price_vector.at[i].add(min(current_excess_budgets) + 1)
+
+        while d_i > 0:
+            p_neighbor = price_vector.at[i].add(
+                p_neighbor[i] + min(current_excess_budgets) + 1
+            )
             res = compute_agg_quantities(p_neighbor)
             agents_demanding_i = find_agent_demand(i, res["demand"])
             current_excess_budgets = res["excess_budgets"][agents_demanding_i]
@@ -91,7 +95,7 @@ def find_all_neighbors(
     excess_demand: jax.Array,
     excess_budgets: jax.Array,
     step_sizes: jax.Array,
-    compute_agg_quantities: Market_Function,
+    evaluate_prices: Callable[[jax.Array], dict[str, jax.Array]],
     tabu_list: jax.Array,
 ):
     """Find all neighbors.
@@ -110,13 +114,17 @@ def find_all_neighbors(
     gradient_neighbors = find_gradient_neighbors(
         price_vector, step_sizes, excess_demand
     )
+
     IA_neighbors = find_IA_neighbors(
-        price_vector, excess_demand, excess_budgets, compute_agg_quantities
+        price_vector, excess_demand, excess_budgets, evaluate_prices
     )
 
     neighbors = jnp.vstack((gradient_neighbors, IA_neighbors))
     # neigbor_types = ["gradient"] * len(gradient_neighbors) + ["IA"] * len(IA_neighbors)
-    agg_quantites = compute_agg_quantities(neighbors)
+
+    vmap_evaluate_prices = jax.vmap(evaluate_prices)
+
+    agg_quantites = vmap_evaluate_prices(neighbors)
     neighbors = filter_out_tabu_neighbors(neighbors, agg_quantites, tabu_list)
 
     return neighbors

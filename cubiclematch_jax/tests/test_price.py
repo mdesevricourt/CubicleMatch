@@ -12,8 +12,11 @@ def test_price_bundles():
     prices = jnp.array([10, 5, 0, 0, 0, 10, 5, 0, 0, 0])
 
     expected = jnp.array([30, 25])
+    result = price_bundles(jnp.array([bundle1, bundle2]), prices)
 
-    assert jnp.allclose(price_bundles(jnp.array([bundle1, bundle2]), prices), expected)
+    assert jnp.allclose(result, expected)
+    print(result.shape)
+    assert result.shape == (2,)
 
 
 def test_affordable_bundles(verbose=False):

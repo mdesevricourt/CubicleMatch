@@ -24,7 +24,7 @@ def test_generate_random_price_vector():
     assert not jnp.allclose(price_vector, price_vector_2)
 
 
-def test_filter_out_tabu_neighbors():
+def test_filter_out_tabu_neighbors_empty_list():
     """Test the filter_out_tabu_neighbors function"""
     neighbors = jnp.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [8, 9, 10]])
     tabu_list = jnp.array([[1, 2, 3], [7, 8, 9]])
@@ -33,6 +33,17 @@ def test_filter_out_tabu_neighbors():
     non_tabu_neighbors = filter_out_tabu_neighbors(neighbors, agg_dict, tabu_list)
 
     assert jnp.allclose(non_tabu_neighbors, jnp.array([[4, 5, 6], [8, 9, 10]]))
+
+
+def test_filter_out_tabu_neighbors():
+    """Test the filter_out_tabu_neighbors function"""
+    neighbors = jnp.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [8, 9, 10]])
+    tabu_list = jnp.array([])
+    agg_dict = {"excess_demand_vec": neighbors}
+
+    non_tabu_neighbors = filter_out_tabu_neighbors(neighbors, agg_dict, tabu_list)
+
+    assert jnp.allclose(non_tabu_neighbors, neighbors)
 
 
 def test_find_neighbor_with_smallest_error():
@@ -48,4 +59,5 @@ def test_find_neighbor_with_smallest_error():
 if __name__ == "__main__":
     test_generate_random_price_vector()
     test_filter_out_tabu_neighbors()
+    test_filter_out_tabu_neighbors_empty_list()
     test_find_neighbor_with_smallest_error()

@@ -1,6 +1,7 @@
 import jax
 import jax.numpy as jnp
 
+from cubiclematch import agent
 from cubiclematch_jax.main import main
 
 
@@ -30,19 +31,22 @@ supply = jnp.array([1.0, 1.0, 1.0])
 bundles_reversed = bundles[::-1]
 
 agent1 = Agent("agent1", 100.0, preferences=bundles_reversed)
+agent2 = Agent("agent2", 101.0, preferences=bundles_reversed)
+agent3 = Agent("agent3", 102.0, preferences=bundles_reversed)
 
 
 def test_main():
-    key = jax.random.PRNGKey(0)
+    key = jax.random.PRNGKey(10)
 
-    agents = [agent1]
+    agents = [agent1, agent2, agent3]
+    settings = {"verbose": True}
 
-    price_vec, excess_demand, excess_budgets, num_iterations = main(
-        key,
-        agents,
-        bundles,
-        supply,
-    )
+    res, agg_quant = main(key, agents, bundles, supply, settings)
+    print(f"price_vec: {res[0]}")
+    print(f"excess_demand_vec: {res[1]}")
+    print(f"number_excess_demand: {res[2]}")
+    print(f"key: {res[3]}")
+    print(f"agg_quant: {agg_quant}")
 
 
 if __name__ == "__main__":
