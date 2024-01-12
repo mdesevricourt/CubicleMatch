@@ -4,8 +4,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from cubiclematch_jax.aux_func import filter_out_tabu_neighbors
-from cubiclematch_jax.demand import find_agent_demand
+from cubiclematch_jax.demand.demand import find_agent_demand
+from cubiclematch_jax.price.aux_func import filter_out_tabu_neighbors
 
 Market_Function = Callable[[jax.Array], dict[str, jax.Array]]
 

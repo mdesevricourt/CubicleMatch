@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.aux_func import (
+from cubiclematch_jax.price.aux_func import (
     filter_out_tabu_neighbors,
     find_neighbor_with_smallest_error,
     generate_random_price_vector,

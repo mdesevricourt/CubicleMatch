@@ -1,4 +1,3 @@
-import jax
 import jax.numpy as jnp
 
 from cubiclematch_jax.utility import (

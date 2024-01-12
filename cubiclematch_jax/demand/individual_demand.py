@@ -1,8 +1,8 @@
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.preferences import find_best_bundle_from_ordering
-from cubiclematch_jax.price import affordable_bundles
+from cubiclematch_jax.demand.preferences import find_best_bundle_from_ordering
+from cubiclematch_jax.demand.price import affordable_bundles
 
 
 def compute_individual_demand(

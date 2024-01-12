@@ -1,14 +1,18 @@
-from typing import Protocol, Union
+from abc import ABC, abstractmethod
+from typing import Protocol, Sequence, Union
 
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.aux_func import compute_total_budget, generate_random_price_vector
+from cubiclematch_jax.aggregates.market_level import compute_agg_quantities
+from cubiclematch_jax.demand.individual_demand import calculate_demand_vector
+from cubiclematch_jax.demand.price import price_bundles
 from cubiclematch_jax.find_ACE import ACE_algorithm, ACE_iteration_extended
-from cubiclematch_jax.individual_demand import calculate_demand_vector
-from cubiclematch_jax.market_level import compute_agg_quantities
-from cubiclematch_jax.neighbors import find_all_neighbors
-from cubiclematch_jax.price import price_bundles
+from cubiclematch_jax.price.aux_func import (
+    compute_total_budget,
+    generate_random_price_vector,
+)
+from cubiclematch_jax.price.neighbors import find_all_neighbors
 
 
 class Agent(Protocol):
@@ -19,10 +23,11 @@ class Agent(Protocol):
 
 def main(
     key,
-    agents: list[Agent],
+    agents: Sequence[Agent],
     bundles: jax.Array,
     supply: jax.Array,
     settings: Union[dict[str, float], None] = None,
+    verbose: bool = False,
 ):
     """Run the ACE algorithm.
 
@@ -48,7 +53,6 @@ def main(
     max_budget = float(jnp.max(budgets))
     preference_orderings = jnp.array([agent.preferences for agent in agents])
     length = len(supply)
-    verbose: bool = settings.pop("verbose", False)
 
     if settings:
         raise ValueError(f"Unknown settings: {settings}")

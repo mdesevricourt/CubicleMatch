@@ -1,7 +1,6 @@
 import jax.numpy as jnp
-import pytest
 
-from cubiclematch_jax.individual_demand import (
+from cubiclematch_jax.demand.individual_demand import (
     calculate_demand_vector,
     compute_individual_demand,
 )

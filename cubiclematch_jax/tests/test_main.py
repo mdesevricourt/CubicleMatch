@@ -39,9 +39,8 @@ def test_main():
     key = jax.random.PRNGKey(10)
 
     agents = [agent1, agent2, agent3]
-    settings = {"verbose": True}
 
-    res, agg_quant = main(key, agents, bundles, supply, settings)
+    res, agg_quant = main(key, agents, bundles, supply, verbose=True)
     print(f"price_vec: {res[0]}")
     print(f"excess_demand_vec: {res[1]}")
     print(f"number_excess_demand: {res[2]}")

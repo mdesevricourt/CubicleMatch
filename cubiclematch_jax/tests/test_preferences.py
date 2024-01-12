@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.preferences import (
+from cubiclematch_jax.demand.preferences import (
     find_best_bundle_from_ordering,
     find_ind_demands_from_available_bundles,
     find_position_bundle_ordering,

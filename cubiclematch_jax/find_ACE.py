@@ -6,7 +6,7 @@ from typing import Callable
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.aux_func import (
+from cubiclematch_jax.price.aux_func import (
     select_best_neighbor,
     sort_neighbors_by_clearing_error,
 )
