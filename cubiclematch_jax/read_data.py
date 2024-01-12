@@ -1,9 +1,8 @@
 from pathlib import Path
-from venv import create
 
 import jax
 import jax.numpy as jnp
-import pandas as pd
+import pandas as pd  # type: ignore
 
 from cubiclematch_jax.demand.utility import (  # type: ignore
     create_total_utility_matrix,
