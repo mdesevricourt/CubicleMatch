@@ -10,11 +10,7 @@ from cubiclematch_jax.main.config import (
     max_num_half_days,
     num_half_days,
 )
-from cubiclematch_jax.supply.supply import (
-    generate_and_save_bundles,
-    generate_bundles,
-    save_vectors,
-)
+from cubiclematch_jax.supply.supply import generate_and_save_bundles
 
 num_cubicles = int(jnp.sum(cubicles_included))
 
