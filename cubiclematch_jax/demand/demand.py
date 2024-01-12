@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 
 from cubiclematch_jax.demand.price import affordable_bundles
-from cubiclematch_jax.utility import find_best_bundle_tilde
+from cubiclematch_jax.demand.utility import find_best_bundle_tilde
 
 
 def individual_demand(
