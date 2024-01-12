@@ -4,6 +4,7 @@ import pprint
 pp = pprint.PrettyPrinter(indent=4)
 import itertools
 from math import comb
+from pathlib import Path
 
 import jax
 import jax.numpy as jnp
@@ -12,7 +13,7 @@ import numpy as np
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 
-def generate_vectors(
+def generate_bundles(
     max_num_half_days: int, tot_num_half_days: int, num_cubicles: int, verbose=True
 ):
     """Generate all possible supply vectors. The supply vectors are of length `tot_num_half_days * num_cubicles` and
@@ -70,8 +71,11 @@ def save_vectors(vector, filename):
     np.save(filename, vector)
 
 
-def generate_and_save_vectors(
-    max_num_half_days: int, total_num_half_days: int, total_num_cubicles: int
+def generate_and_save_bundles(
+    max_num_half_days: int,
+    total_num_half_days: int,
+    total_num_cubicles: int,
+    data_path: Path = Path(""),
 ):
     logging.info(
         f"Generating vectors for {total_num_half_days} half-days and {total_num_cubicles} cubicles"
@@ -79,16 +83,22 @@ def generate_and_save_vectors(
     filename = (
         f"vectors_{max_num_half_days}_{total_num_half_days}_{total_num_cubicles}.npy"
     )
-    vectors = generate_vectors(
+    file_path = data_path / filename
+    if file_path.exists():
+        logging.info(f"File {filename} already exists")
+        return
+
+    vectors = generate_bundles(
         max_num_half_days=max_num_half_days,
         tot_num_half_days=total_num_half_days,
         num_cubicles=total_num_cubicles,
     )
-    save_vectors(vectors, filename)
+
+    save_vectors(vectors, file_path)
     logging.info(f"Saved vectors to {filename}")
 
 
 if __name__ == "__main__":
-    generate_and_save_vectors(
+    generate_and_save_bundles(
         max_num_half_days=6, total_num_half_days=10, total_num_cubicles=6
     )

@@ -8,7 +8,7 @@ from cubiclematch_jax.demand.individual_demand import (
     compute_individual_demand,
 )
 from cubiclematch_jax.demand.price import price_bundles
-from cubiclematch_jax.utility import create_U_tilde
+from cubiclematch_jax.demand.utility import create_total_utility_matrix
 
 
 def test_individual_demand():
@@ -32,7 +32,7 @@ def test_individual_demand():
     bundles = jnp.array([bundle1, bundle2, bundle3, bundle4])
     prices = jnp.array([10, 5, 5, 0, 0, 10, 5, 0, 0, 0])
     bundle_prices = price_bundles(bundles, prices)
-    U_tilde = create_U_tilde(U, u_cubicle)
+    U_tilde = create_total_utility_matrix(U, u_cubicle)
     expected = bundle2
     demanded_bundle, _ = compute_individual_demand(
         budget, U_tilde, bundles, bundle_prices
@@ -62,7 +62,10 @@ def test_vector_demand():
     u_cubicle_ls = [u_cubicle1, u_cubicle2]
 
     U_tilde = jnp.array(
-        [create_U_tilde(U, u_cubicle) for U, u_cubicle in zip(U_ls, u_cubicle_ls)]
+        [
+            create_total_utility_matrix(U, u_cubicle)
+            for U, u_cubicle in zip(U_ls, u_cubicle_ls)
+        ]
     )
     U = jnp.array(U_ls)
     u_cubicle = jnp.array(u_cubicle_ls)

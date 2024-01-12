@@ -1,8 +1,9 @@
 import jax.numpy as jnp
 
-from cubiclematch_jax.utility import (
+from cubiclematch_jax.demand.utility import (
     collapse_bundle,
-    create_U_tilde,
+    create_total_utility_matrix,
+    create_utility_matrix_slots,
     find_best_bundle,
     total_utility_bundle,
     total_utility_bundles,
@@ -191,7 +192,7 @@ def test_U_tilde():
             ],
         ]
     )
-    assert jnp.allclose(create_U_tilde(U, u_cubicle), expected_U_tilde)
+    assert jnp.allclose(create_total_utility_matrix(U, u_cubicle), expected_U_tilde)
 
     U = jnp.array(
         [
@@ -254,7 +255,32 @@ def test_U_tilde():
             ],
         ]
     )
-    assert jnp.allclose(create_U_tilde(U, u_cubicle), expected_U_tilde)
+    assert jnp.allclose(create_total_utility_matrix(U, u_cubicle), expected_U_tilde)
+
+
+def test_create_utility_matrix_over_slots(verbose=False):
+    u_vec = jnp.array([10, 5, 10, 0, 0, 1, 1, 1, 0, 0])
+    bonus_full_day = jnp.array(6.0)
+
+    expected = jnp.array(
+        [
+            [10, 6, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 5, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 10, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 6, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ]
+    )
+
+    output = create_utility_matrix_slots(u_vec, bonus_full_day)
+    if verbose:
+        print(output)
+    assert jnp.allclose(output, expected)
 
 
 if __name__ == "__main__":
@@ -265,3 +291,4 @@ if __name__ == "__main__":
     test_total_utility_cubicles()
     test_find_best_bundle()
     test_U_tilde()
+    test_create_utility_matrix_over_slots(verbose=True)

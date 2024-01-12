@@ -112,7 +112,9 @@ def find_best_bundle(bundles: jax.Array, U: jax.Array, u_cubicle: jax.Array):
     return bundles[best_bundle_index], best_bundle_index
 
 
-def create_U_tilde(U_jax: jax.Array, u_cubicle_jax: jax.Array) -> jax.Array:
+def create_total_utility_matrix(
+    U_jax: jax.Array, u_cubicle_jax: jax.Array
+) -> jax.Array:
     """Return the utility matrix of the cubicle match problem.
 
     Args:
@@ -155,6 +157,31 @@ def create_U_tilde(U_jax: jax.Array, u_cubicle_jax: jax.Array) -> jax.Array:
 
     U_tilde2 = jnp.array(U_tilde)
     return U_tilde2
+
+
+def create_utility_matrix_slots(
+    utility_half_days: jax.Array, bonus_full_day: jax.Array
+) -> jax.Array:
+    """Return the utility matrix over half_days for the cubicle match problem. It takes into account utility over each half-day and the
+    bonus for a full day.
+
+    Args
+    ----
+    utility_half_days (jax.Array): A utility vector of utility over each half-day.
+
+    bonus_full_day (jax.Array): A utility bonus (scalar) for a full day."""
+
+    U = np.zeros((utility_half_days.shape[0], utility_half_days.shape[0]))
+    # the diagonal of the utility matrix is the utility over half-days
+    np.fill_diagonal(U, utility_half_days)
+    # add the bonus for a full day
+    for i in range(U.shape[0]):
+        if i % 2 == 0:
+            both_positive = utility_half_days[i] > 0 and utility_half_days[i + 1] > 0
+            if both_positive:
+                U[i, i + 1] = bonus_full_day
+
+    return jnp.array(U)
 
 
 def compute_utility_tilde(bundle: jax.Array, U_tilde: jax.Array):
