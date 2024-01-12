@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 
 from cubiclematch import agent
-from cubiclematch_jax.main import main
+from cubiclematch_jax.main.main import main
 
 
 class Agent:
