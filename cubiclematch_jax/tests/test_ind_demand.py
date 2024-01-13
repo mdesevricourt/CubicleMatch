@@ -1,9 +1,7 @@
 import jax.numpy as jnp
 
 from cubiclematch_jax.demand.individual_demand import (
-    calculate_demand_vector,
-    compute_individual_demand,
-)
+    ind_demand_from_preference, vmap_ind_demand_from_preference)
 
 
 def test_individual_demand_budget_constraint():
@@ -15,7 +13,7 @@ def test_individual_demand_budget_constraint():
     )  # preference in descending order
     available_bundles = jnp.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
-    best_bundle, excess_budget = compute_individual_demand(
+    best_bundle, excess_budget = ind_demand_from_preference(
         bundle_prices, budget, preference_ordering, available_bundles
     )
     assert jnp.array_equal(
@@ -33,7 +31,7 @@ def test_compute_individual_demand():
     )  # preference in descending order
     available_bundles = jnp.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
-    best_bundle, excess_budget = compute_individual_demand(
+    best_bundle, excess_budget = ind_demand_from_preference(
         bundle_prices, budget, preference_ordering, available_bundles
     )
     assert jnp.array_equal(
@@ -54,7 +52,7 @@ def test_calculate_demand_vector(verbose=False):
     preference_orderings = jnp.array([preference_1, preference_2])
     available_bundles = jnp.array([bundle1, bundle2, bundle3])
 
-    best_bundles, excess_budgets = calculate_demand_vector(
+    best_bundles, excess_budgets = vmap_ind_demand_from_preference(
         bundle_prices, budgets, preference_orderings, available_bundles
     )
     if verbose:
@@ -75,7 +73,7 @@ def test_calculate_demand_vector_one_agent(verbose=False):
     preference_orderings = jnp.array([preference_1])
     available_bundles = jnp.array([bundle1, bundle2, bundle3])
 
-    best_bundles, excess_budgets = calculate_demand_vector(
+    best_bundles, excess_budgets = vmap_ind_demand_from_preference(
         bundle_prices, budgets, preference_orderings, available_bundles
     )
     if verbose:

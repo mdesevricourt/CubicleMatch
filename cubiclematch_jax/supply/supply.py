@@ -64,7 +64,7 @@ def generate_bundles(
 
     valid_bundles = np.vstack((valid_bundles, np.zeros(vector_length, dtype=bool)))
 
-    return valid_bundles.astype(np.float32)
+    return valid_bundles.astype(np.bool_)
 
 
 def save_vectors(vector, filename):

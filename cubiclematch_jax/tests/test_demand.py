@@ -4,9 +4,7 @@ import jax.numpy as jnp
 from cubiclematch_jax.aggregates.market_level import compute_agg_quantities
 from cubiclematch_jax.demand.demand import find_agent_demand
 from cubiclematch_jax.demand.individual_demand import (
-    calculate_demand_vector,
-    compute_individual_demand,
-)
+    ind_demand_from_preference, vmap_ind_demand_from_preference)
 from cubiclematch_jax.demand.price import price_bundles
 from cubiclematch_jax.demand.utility import create_total_utility_matrix
 
@@ -34,7 +32,7 @@ def test_individual_demand():
     bundle_prices = price_bundles(bundles, prices)
     U_tilde = create_total_utility_matrix(U, u_cubicle)
     expected = bundle2
-    demanded_bundle, _ = compute_individual_demand(
+    demanded_bundle, _ = ind_demand_from_preference(
         budget, U_tilde, bundles, bundle_prices
     )
     assert jnp.allclose(demanded_bundle, expected)
@@ -86,7 +84,7 @@ def test_vector_demand():
     expected2 = bundle2
     expected = jnp.array([expected1, expected2])
 
-    demanded_bundles, _ = calculate_demand_vector(
+    demanded_bundles, _ = vmap_ind_demand_from_preference(
         budgets, U_tilde, bundles, bundle_prices
     )
     print(demanded_bundles)

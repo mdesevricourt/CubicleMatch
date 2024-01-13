@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 
 from cubiclematch import agent
-from cubiclematch_jax.main.main import main
+from cubiclematch_jax.main.main import main_algorithm
 
 
 class Agent:
@@ -40,7 +40,7 @@ def test_main():
 
     agents = [agent1, agent2, agent3]
 
-    res, agg_quant = main(key, agents, bundles, supply, verbose=True)
+    res, agg_quant = main_algorithm(key, agents, bundles, supply, verbose=True)
     print(f"price_vec: {res[0]}")
     print(f"excess_demand_vec: {res[1]}")
     print(f"number_excess_demand: {res[2]}")

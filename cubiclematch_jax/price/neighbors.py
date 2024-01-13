@@ -74,15 +74,16 @@ def find_IA_neighbors(
         current_excess_budgets = excess_budgets.copy()
         if d_i > 0:
             neigbor_types.append("IA neighbor (excess demand)")
+            d_i_target = d_i
 
-        while d_i > 0:
-            p_neighbor = price_vector.at[i].add(
-                p_neighbor[i] + min(current_excess_budgets) + 1
-            )
-            res = compute_agg_quantities(p_neighbor)
-            agents_demanding_i = find_agent_demand(i, res["demand"])
-            current_excess_budgets = res["excess_budgets"][agents_demanding_i]
-            d_i = res["excess_demand_vec"][i]
+            while d_i >= d_i_target:
+                p_neighbor = price_vector.at[i].set(
+                    p_neighbor[i] + min(current_excess_budgets) + 0.001
+                )
+                res = compute_agg_quantities(p_neighbor)
+                agents_demanding_i = find_agent_demand(i, res["demand"])
+                current_excess_budgets = res["excess_budgets"][agents_demanding_i]
+                d_i = res["excess_demand_vec"][i]
 
         neighbors_ls.append(p_neighbor)
     neighbors = jnp.array(neighbors_ls)

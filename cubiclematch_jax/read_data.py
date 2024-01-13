@@ -2,28 +2,31 @@ from pathlib import Path
 
 import jax
 import jax.numpy as jnp
-import pandas as pd  # type: ignore
+import numpy as np
+import pandas as pd
 
+from cubiclematch_jax.demand.rank_bundles import rank_bundles
 from cubiclematch_jax.demand.utility import (  # type: ignore
-    create_total_utility_matrix,
-    create_utility_matrix_slots,
-)
+    create_utility_matrix_slots, vmap_utility_over_half_days)
+from cubiclematch_jax.main.config import survey_path
 
-data_path = Path(
-    r"C:\Users\itism\Documents\GitHub\CubicleMatch\data\Cubicles_spring24_January-8-2024_15.54.csv"
-)
-
-df = pd.read_csv(data_path)
+df = pd.read_csv(survey_path)
 print(df.head())
 print(df.columns)
 print(df.iloc[1])
 print(df.iloc[2])
 # drop first two rows
 # df = df.drop([0, 1])
-
+budget_dictionary = {
+    "1": 100,
+    "2": 101,
+    "3": 102,
+    "4": 102,
+    "5": 102,
+}
 
 def row_to_utility(row):
-    name = row["Q1"] + " " + row["Q2"]
+    name = row["Q1"]
     # capitalise first letter of each word
     name = name.title()
 
@@ -46,10 +49,10 @@ def row_to_utility(row):
     )
 
 
-print(row_to_utility(df.iloc[2]))
+# print(row_to_utility(df.iloc[2]))
 
 
-def row_to_utility_matrix(row, cubicle_included=None):
+def transform_row(row, cubicle_included=None, bundles = None):
     if cubicle_included is None:
         cubicle_included = jnp.array([True] * 8)
 
@@ -57,17 +60,33 @@ def row_to_utility_matrix(row, cubicle_included=None):
 
     utility_matrix = create_utility_matrix_slots(utility_slots, full_day_bonus)
     utility_cubicles = utility_cubicles[cubicle_included]
-    total_utility_matrix = create_total_utility_matrix(utility_matrix, utility_cubicles)
+    # total_utility_matrix = create_total_utility_matrix(utility_matrix, utility_cubicles)
+    year = str(row["Q3"])
+    base_budget = budget_dictionary[year]
+    # budget is the base budget plus random number between 0 and 1
+    budget = base_budget + np.random.rand()
+    
+    dictionary = {
+        "name": name,
+        "budget": budget,
+        "utility_matrix": utility_matrix,
+        "utility_cubicles": utility_cubicles,
+    }
+    ranked_bundles = None
+    if bundles is not None: # rank bundles according to utility matrix
+        bundles_utility = vmap_utility_over_half_days(bundles, utility_matrix)
+        ranked_bundles = rank_bundles(bundles, bundles_utility)
+        dictionary["ranked_bundles"] = ranked_bundles
+    
+    row["name"] = name
+    row["budget"] = budget
+    row["utility_matrix"] = utility_matrix
+    row["utility_cubicles"] = utility_cubicles
+    row["ranked_bundles"] = ranked_bundles
 
-    return name, total_utility_matrix
+    return row
 
 
-cubicles_included = jnp.array([False, True, True, True, True, True, True, True])
+# cubicles_included = jnp.array([False, True, True, True, True, True, True, True])
 
-print(row_to_utility_matrix(df.iloc[2]))
-print(
-    row_to_utility_matrix(
-        df.iloc[2],
-        cubicle_included=cubicles_included,
-    )
-)
+# print(transform_row(df.iloc[2]))

@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.demand.price import affordable_bundles
+from cubiclematch_jax.demand.price import filter_affordable_bundles
 from cubiclematch_jax.demand.utility import find_best_bundle_tilde
 
 
@@ -24,7 +24,7 @@ def individual_demand(
     """
 
     # find the affordable bundles
-    affordable_bundles_ls = affordable_bundles(bundles, bundle_prices, budget)
+    affordable_bundles_ls = filter_affordable_bundles(bundles, bundle_prices, budget)
     # compute the total utility of each affordable bundle
     best_affordable_bundle, best_bundle_index = find_best_bundle_tilde(
         affordable_bundles_ls, U_tilde=U_tilde

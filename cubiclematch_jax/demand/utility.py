@@ -36,10 +36,11 @@ def utility_over_half_days(collapsed_bundle: jax.Array, U: jax.Array) -> jax.Arr
     collapsed_bundle = jnp.reshape(collapsed_bundle, (-1, 1))
 
     # compute the utility
-    utility = jnp.matmul(jnp.matmul(collapsed_bundle.T, U), collapsed_bundle)
+    utility = jnp.matmul(jnp.matmul(collapsed_bundle.T, U), collapsed_bundle).squeeze()
 
     return utility
 
+vmap_utility_over_half_days = jax.vmap(utility_over_half_days, in_axes=(0, None))
 
 def utility_over_cubicles(bundle: jax.Array, u_cubicle: jax.Array) -> jax.Array:
     """Return the utility of a person from the cubicle.

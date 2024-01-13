@@ -6,10 +6,7 @@ from typing import Callable
 import jax
 import jax.numpy as jnp
 
-from cubiclematch_jax.price.aux_func import (
-    select_best_neighbor,
-    sort_neighbors_by_clearing_error,
-)
+from cubiclematch_jax.price.aux_func import select_best_neighbor
 
 
 def ACE_iteration_extended(
@@ -103,6 +100,13 @@ def ACE_algorithm(
 
     while current_time - start_time < max_hours * 3600 and best_error > 0:
         if verbose:
+            time_elapsed = current_time - start_time
+            hours_elapsed = time_elapsed // 3600
+            minutes_elapsed = (time_elapsed % 3600) // 60
+            seconds_elapsed = time_elapsed % 60
+            print(
+                f"current_time elapsed: {hours_elapsed}h {minutes_elapsed}m {seconds_elapsed}s"
+            )
             print(f"best_error: {best_error}")
             print(f"best_number_excess_demand: {best_number_excess_demand}")
             print(f"best_p: {best_p}")
@@ -115,5 +119,11 @@ def ACE_algorithm(
             best_p = p
 
         current_time = time.time()
-
-    return best_p, best_error, best_number_excess_demand, key
+    res = {
+        "price_vec": best_p,
+        "clearing_error": best_error,
+        "excess_demand_vec": best_number_excess_demand,
+        "number_excess_demand": best_number_excess_demand,
+        "key": key,
+    }
+    return res

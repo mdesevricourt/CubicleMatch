@@ -21,7 +21,7 @@ def price_bundle(bundle: jax.Array, prices: jax.Array) -> jax.Array:
 price_bundles = jax.vmap(price_bundle, in_axes=(0, None))
 
 
-def affordable_bundles(
+def filter_affordable_bundles(
     bundles: jax.Array, bundle_prices: jax.Array, budget: jax.Array
 ) -> jax.Array:
     """Return the affordable bundles from a list of bundles.
