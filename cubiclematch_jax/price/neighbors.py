@@ -91,6 +91,56 @@ def find_IA_neighbors(
     return neighbors
 
 
+# %%
+
+
+from typing import Callable
+
+import jax
+import jax.numpy as jnp
+
+
+def find_individual_adjustment_neighbors_jit(
+    price_vector: jax.Array,
+    excess_demand: jax.Array,
+    excess_budgets: jax.Array,
+    compute_agg_quantities: Callable[[jax.Array], dict[str, jax.Array]],
+):
+    def adjust_price(i, price_vector):
+        p_neighbor = price_vector
+
+        def decrease_price(p):
+            return p.at[i].set(0), None
+
+        def increase_price(p):
+            d_i = excess_demand[i]
+            d_i_target = d_i
+            current_excess_budgets = excess_budgets
+
+            def body_fn(carry):
+                p, d_i = carry
+                p = p.at[i].set(p[i] + jnp.min(current_excess_budgets) + 0.001)
+                res = compute_agg_quantities(p)
+                agents_demanding_i = find_agent_demand(i, res["demand"])
+                current_excess_budgets = res["excess_budgets"][agents_demanding_i]
+                d_i = res["excess_demand_vec"][i]
+                return (p, d_i), None
+
+            p, d_i = jax.lax.while_loop(
+                lambda carry: carry[1] >= d_i_target, body_fn, (p, d_i)
+            )
+            return p, None
+
+        return jax.lax.cond(
+            excess_demand[i] < 0, decrease_price, increase_price, p_neighbor
+        )
+
+    neighbors = jax.vmap(adjust_price, in_axes=(0, None))(
+        jnp.arange(excess_demand.size), price_vector
+    )
+    return neighbors
+
+
 def find_all_neighbors(
     price_vector: jax.Array,
     excess_demand: jax.Array,

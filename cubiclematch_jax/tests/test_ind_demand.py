@@ -1,7 +1,9 @@
 import jax.numpy as jnp
 
 from cubiclematch_jax.demand.individual_demand import (
-    ind_demand_from_preference, vmap_ind_demand_from_preference)
+    ind_demand_from_preference,
+    vmap_ind_demand_from_preference,
+)
 
 
 def test_individual_demand_budget_constraint():
